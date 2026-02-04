@@ -1,0 +1,40 @@
+{
+  "kind": "build_request",
+  "title": "Restore backend getCategoriesWithProducts pagination and 5-product slice",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "In `backend/main.mo`, restore `getCategoriesWithProducts(offset: Nat, limit: Nat)` to match the user-provided implementation exactly: (1) sort categories by `order` ascending, (2) paginate categories using `sliceToArray(offset, endIndex)`, (3) for each category, filter products by `categoryId`, (4) sort products with `isFeatured` first and then `lastUpdatedDate` descending with the same null-handling logic, and (5) return at most 5 products per category using `sliceToArray(0, min(sortedProducts.size(), 5))` while still returning `productCount = categoryProducts.size()`.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1",
+          "msg-2"
+        ],
+        "quotes": [
+          "here is the correct implementation like before you wrecked it. restore it like this",
+          "build"
+        ]
+      },
+      "acceptanceCriteria": [
+        "`backend/main.mo` no longer contains `let paginatedCategories = sortedCategories.sliceToArray(endIndex, endIndex);` inside `getCategoriesWithProducts` and instead uses `sliceToArray(offset, endIndex)`.",
+        "`getCategoriesWithProducts` no longer contains `let limitedProducts = sortedProducts.sliceToArray(0, 0);` and instead slices from `0` to `min(sortedProducts.size(), 5)`.",
+        "Calling `getCategoriesWithProducts(0, N)` returns up to `N` categories, each with `products.size() <= 5` and `productCount` equal to the total number of products in that category.",
+        "Within each returned category, featured products are ordered before non-featured products; ties are resolved by `lastUpdatedDate` descending using the provided null-handling cases."
+      ]
+    }
+  ],
+  "constraints": [
+    "Keep the backend as a single-actor Motoko canister with all logic in `backend/main.mo`.",
+    "Do not introduce state schema changes; do not add `backend/migration.mo` for this fix."
+  ],
+  "nonGoals": [
+    "Do not change any frontend code or React Query hooks as part of this request.",
+    "Do not alter the limit of 5 products per category or the provided sorting rules."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

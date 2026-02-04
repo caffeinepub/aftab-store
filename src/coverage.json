@@ -1,0 +1,36 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-04T22:56:25.897Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 1,
+    "implemented": 0,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "In `backend/main.mo`, restore `getCategoriesWithProducts(offset: Nat, limit: Nat)` to match the user-provided implementation exactly: (1) sort categories by `order` ascending, (2) paginate categories using `sliceToArray(offset, endIndex)`, (3) for each category, filter products by `categoryId`, (4) sort products with `isFeatured` first and then `lastUpdatedDate` descending with the same null-handling logic, and (5) return at most 5 products per category using `sliceToArray(0, min(sortedProducts.size(), 5))` while still returning `productCount = categoryProducts.size()`.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

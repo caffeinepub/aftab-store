@@ -1,0 +1,30 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-04T22:56:25.895Z",
+  "summary": "Cannot verify that REQ-1 was implemented because the `backend/main.mo` diff is truncated before the `getCategoriesWithProducts` function; the only clearly evidenced change is an update to `project_state.json`, which was not requested.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "In `backend/main.mo`, restore `getCategoriesWithProducts(offset: Nat, limit: Nat)` to match the specified implementation (category sort by `order`, paginate via `sliceToArray(offset, endIndex)`, filter by `categoryId`, sort products featured-first then `lastUpdatedDate` desc with same null-handling, and return up to 5 products per category while keeping `productCount` as total).",
+      "reason": "The provided `backend/main.mo` diff content is truncated and does not include `getCategoriesWithProducts`, so there is no evidence that the required pagination and 5-product slice logic were restored (or that the incorrect `sliceToArray(endIndex, endIndex)` / `sliceToArray(0, 0)` lines were removed).",
+      "evidence": [
+        "backend/main.mo (truncated; `getCategoriesWithProducts` not shown)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Updated `project_state.json` project summary/feature inventory metadata.",
+      "reason": "The BuildRequest only asks to restore backend pagination/slicing logic in `backend/main.mo` and explicitly constrains the fix to backend logic; it does not request updating repository state/metadata files.",
+      "evidence": [
+        "project_state.json"
+      ]
+    }
+  ],
+  "confidence": 0.62,
+  "changed_files": [
+    "backend/main.mo",
+    "project_state.json"
+  ]
+}
