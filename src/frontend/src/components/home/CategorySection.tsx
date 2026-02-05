@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import ProductGrid from './ProductGrid';
-import type { CategoryWithProducts } from '../../backend';
+import type { CategoryWithProducts, Product } from '../../backend';
 
 interface CategorySectionProps {
   categoryWithProducts: CategoryWithProducts;
-  onProductSelect?: (barcode: string) => void;
+  onProductSelect?: (product: Product) => void;
 }
 
 export default function CategorySection({ categoryWithProducts, onProductSelect }: CategorySectionProps) {

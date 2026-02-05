@@ -4,14 +4,16 @@ import StoreBanner from '../components/StoreBanner';
 import SearchBar from '../components/SearchBar';
 import CategoriesDisplay from '../components/home/CategoriesDisplay';
 import ProductDetailModal from '../components/ProductDetailModal';
-import { useGetCategoriesWithProducts } from '../hooks/useQueries';
+import { useGetCategoriesWithProducts, useGetStoreDetails } from '../hooks/useQueries';
 import { Loader2 } from 'lucide-react';
+import type { Product } from '../backend';
 
 export default function HomePage() {
   const queryClient = useQueryClient();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [selectedBarcode, setSelectedBarcode] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { data, isLoading, isError } = useGetCategoriesWithProducts(0, 5);
+  const { data: storeDetails } = useGetStoreDetails();
 
   useEffect(() => {
     if (isError) {
@@ -25,17 +27,17 @@ export default function HomePage() {
   useEffect(() => {
     return () => {
       queryClient.removeQueries({ queryKey: ['categoriesWithProducts'] });
-      // Reset selected barcode state
-      setSelectedBarcode(null);
+      // Reset selected product state
+      setSelectedProduct(null);
     };
   }, [queryClient]);
 
-  const handleProductSelect = (barcode: string) => {
-    setSelectedBarcode(barcode);
+  const handleProductSelect = (product: Product) => {
+    setSelectedProduct(product);
   };
 
   const handleCloseModal = () => {
-    setSelectedBarcode(null);
+    setSelectedProduct(null);
   };
 
   return (
@@ -73,10 +75,10 @@ export default function HomePage() {
       </div>
 
       {/* Product Detail Modal */}
-      {selectedBarcode && (
+      {selectedProduct && (
         <ProductDetailModal
-          barcode={selectedBarcode}
-          open={!!selectedBarcode}
+          product={selectedProduct}
+          open={!!selectedProduct}
           onClose={handleCloseModal}
         />
       )}

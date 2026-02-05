@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useActor } from '../../hooks/useActor';
 import CategorySection from './CategorySection';
 import { Loader2 } from 'lucide-react';
-import type { CategoryWithProducts } from '../../backend';
+import type { CategoryWithProducts, Product } from '../../backend';
 
 const INITIAL_CATEGORIES_MOBILE = 3;
 const INITIAL_CATEGORIES_DESKTOP = 5;
 const LOAD_MORE_COUNT = 3;
 
 interface CategoriesDisplayProps {
-  onProductSelect?: (barcode: string) => void;
+  onProductSelect?: (product: Product) => void;
 }
 
 export default function CategoriesDisplay({ onProductSelect }: CategoriesDisplayProps) {

@@ -4,7 +4,7 @@ import type { Product } from '../../backend';
 
 interface ProductGridProps {
   products: Product[];
-  onProductSelect?: (barcode: string) => void;
+  onProductSelect?: (product: Product) => void;
 }
 
 export default function ProductGrid({ products, onProductSelect }: ProductGridProps) {

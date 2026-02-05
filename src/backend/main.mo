@@ -15,7 +15,6 @@ import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
 import MixinAuthorization "authorization/MixinAuthorization";
 
-
 actor {
   include MixinStorage();
 
@@ -980,12 +979,31 @@ actor {
       }
     );
 
-    let totalCount = filteredProducts.size();
+    let sortedProducts = switch (criteria.featuredFirst) {
+      case (?true) {
+        filteredProducts.sort(
+          func(a, b) {
+            if (a.isFeatured and not b.isFeatured) {
+              #less;
+            } else if (not a.isFeatured and b.isFeatured) {
+              #greater;
+            } else {
+              #equal;
+            };
+          }
+        );
+      };
+      case (_) { filteredProducts };
+    };
+
+    let totalCount = sortedProducts.size();
     let pageSize = 10;
     let totalPages = if (totalCount == 0) { 1 } else { (totalCount - 1) / pageSize + 1 };
 
+    let limitedProducts = sortedProducts.sliceToArray(0, Nat.min(sortedProducts.size(), pageSize));
+
     {
-      products = filteredProducts;
+      products = limitedProducts;
       totalCount;
       totalPages;
     };

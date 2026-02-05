@@ -1,6 +1,148 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "No frontend changes required for backend pagination restore",
-  "requirements": []
+  "title": "Prop-driven ProductDetailModal and 10-result search UI updates",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Refactor ProductDetailModal to be fully prop-driven (no internal React Query/network fetches) while preserving modal behaviors and adding a graceful invalid-product state",
+      "acceptanceCriteria": [
+        "`ProductDetailModal` accepts a required `product` prop (full product object) and an `onClose` handler; opening the modal does not trigger any product/category/store fetch requests.",
+        "All existing modal behaviors remain (ESC to close, click-outside to close, focus trap, and body scroll lock).",
+        "If required product fields are missing/invalid, the modal shows a graceful error state instead of attempting to fetch."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ProductDetailModal.tsx",
+          "operation": "modify",
+          "description": "Remove `useProductDetail` and any internal data fetching; change props to accept a required `product` object (and any optional display props like `categoryName`, `storeDetails`, `isStoreDetailsLoading`), keep ESC/click-outside/focus-trap/body-scroll-lock behavior, and add a defensive invalid/missing product error state without performing any network requests."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Update all modal-opening flows to pass a complete product object into ProductDetailModal (home cards, search autocomplete, search results, and category cards)",
+      "acceptanceCriteria": [
+        "Home page product-card clicks open the modal without any additional product fetch.",
+        "Search autocomplete suggestion clicks open the modal using the selected suggestion’s product object, without any additional product fetch.",
+        "Search full results card clicks open the modal using the selected card’s product object, without any additional product fetch.",
+        "Category page product-card clicks open the modal using the selected card’s product object, without any additional product fetch."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "modify",
+          "description": "Replace barcode-only modal state with product-object state; update the `onProductSelect` handler to receive a full product and pass it into `ProductDetailModal` as `product`, ensuring no follow-up product fetch occurs when opening the modal."
+        },
+        {
+          "path": "frontend/src/components/SearchBar.tsx",
+          "operation": "modify",
+          "description": "Change selection state from `selectedBarcode` to `selectedProduct`; update autocomplete click and full results selection to pass the full product object into `ProductDetailModal` (not just barcode), ensuring the modal opening triggers no additional product fetch."
+        },
+        {
+          "path": "frontend/src/pages/CategoryPage.tsx",
+          "operation": "modify",
+          "description": "Replace barcode-only modal state with product-object state; update product-card selection so `ProductDetailModal` receives the selected product object directly from the already-loaded category product list."
+        },
+        {
+          "path": "frontend/src/components/home/CategoriesDisplay.tsx",
+          "operation": "modify",
+          "description": "Update `onProductSelect` prop typing and forwarding to pass a full product object (instead of a barcode) down to `CategorySection`/`ProductGrid` flows so Home page cards can open the modal without extra fetches."
+        },
+        {
+          "path": "frontend/src/components/home/CategorySection.tsx",
+          "operation": "modify",
+          "description": "Update `onProductSelect` prop typing to accept a full product object and forward it to `ProductGrid`, enabling modal opening from Home page cards with a full product object."
+        },
+        {
+          "path": "frontend/src/components/home/ProductGrid.tsx",
+          "operation": "modify",
+          "description": "Update `onProductSelect` prop typing to accept a full product object and pass it to `ProductCard.onSelect`, keeping grid behavior unchanged while enabling prop-driven modal opening."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Update ProductCard so selection callbacks can pass the full product object while preserving existing navigation behavior when no callback is provided",
+      "acceptanceCriteria": [
+        "`ProductCard` supports an `onSelect` callback that receives the `product` object (not only `barcode`).",
+        "Existing navigation behavior (when `onSelect` is not provided) continues to route to the standalone product detail page as it does today."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/home/ProductCard.tsx",
+          "operation": "modify",
+          "description": "Change `onSelect` signature to `(product) => void` and call it with the full `product` object on click; keep existing fallback navigation to `/product/$barcode` when `onSelect` is not provided."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Keep the standalone product detail page behavior unchanged for direct URL access",
+      "acceptanceCriteria": [
+        "Directly navigating to a product detail URL continues to load product details via existing query hooks and renders the page as before.",
+        "No regressions in loading/error/not-found states on the standalone product page."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/ProductDetailPage.tsx",
+          "operation": "modify",
+          "description": "Ensure the standalone product page remains query-hook driven and independent of modal prop passing; if needed due to shared component changes, keep behavior identical (including loading/error/not-found states) and continue rendering `ProductDetailView` with fetched data."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Update SearchBar full-results UI to align with 10-result maximum: displayed count label, responsive grid, and helper message when totalCount > 10",
+      "acceptanceCriteria": [
+        "When search matches > 10 products, the results grid displays 10 cards maximum and shows the helper message verbatim.",
+        "The count label uses the number of displayed results (≤ 10) while still allowing logic to detect when more results exist using `totalCount`.",
+        "Grid layout is 2 columns on mobile and 5 columns on desktop for the full results section.",
+        "Autocomplete remains capped at 10 suggestions (no behavioral change needed)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/SearchBar.tsx",
+          "operation": "modify",
+          "description": "Use the displayed results length (capped at 10) for the count label; render the full results section using a 2-col mobile / 5-col desktop grid; when `searchResults.totalCount > 10`, show the helper text exactly: \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\"; keep autocomplete capped at 10."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Ensure Share and WhatsApp actions work in the modal using only passed-in product data (barcode-derived share URL, WhatsApp via formatWhatsAppApiNumber without modal fetching store details)",
+      "acceptanceCriteria": [
+        "Share copies a URL based on the selected product’s barcode and does not depend on barcode-only state.",
+        "WhatsApp button uses `formatWhatsAppApiNumber()` and functions without causing the modal to fetch store details.",
+        "Modal action buttons function correctly when opened from home, search, and category sources."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ProductDetailView.tsx",
+          "operation": "modify",
+          "description": "Derive share URL from `product.barcode` and ensure WhatsApp uses `formatWhatsAppApiNumber()` with a number provided via already-available props (e.g., `storeDetails.whatsapp`) without requiring any modal-initiated data fetching."
+        },
+        {
+          "path": "frontend/src/components/SearchBar.tsx",
+          "operation": "modify",
+          "description": "When opening `ProductDetailModal`, provide any already-cached store contact info needed for WhatsApp (e.g., via React Query cache access rather than initiating new fetches in the modal) so the WhatsApp action works without modal-initiated API calls."
+        },
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "modify",
+          "description": "When opening `ProductDetailModal`, pass along any already-cached store details value (if available) so WhatsApp actions can use store contact data without modal-initiated fetching."
+        },
+        {
+          "path": "frontend/src/pages/CategoryPage.tsx",
+          "operation": "modify",
+          "description": "When opening `ProductDetailModal`, pass along any already-cached store details value (if available) so WhatsApp actions can use store contact data without modal-initiated fetching."
+        },
+        {
+          "path": "frontend/src/components/ProductDetailModal.tsx",
+          "operation": "modify",
+          "description": "Ensure the modal passes the received `product` (and any provided store contact props) into `ProductDetailView` and does not attempt to fetch store details internally."
+        }
+      ]
+    }
+  ]
 }

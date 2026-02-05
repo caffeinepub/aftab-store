@@ -1,10 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Restore the backend `getCategoriesWithProducts(offset, limit)` behavior for category pagination and per-category product slicing to match the prior correct implementation.
+**Goal:** Make product search return/display at most 10 items and refactor `ProductDetailModal` to be fully prop-driven (no internal fetching), while keeping the standalone product page unchanged.
 
 **Planned changes:**
-- Update `backend/main.mo` `getCategoriesWithProducts(offset: Nat, limit: Nat)` to sort categories by `order` ascending and paginate them using `sliceToArray(offset, endIndex)`.
-- For each paginated category, filter products by `categoryId`, sort products with featured first then by `lastUpdatedDate` descending using the existing null-handling logic, and return at most 5 products via `sliceToArray(0, min(sortedProducts.size(), 5))` while keeping `productCount` as the total products in that category.
+- Backend: Update `searchProducts(criteria : ProductSearchCriteria)` to return a maximum of 10 products in `results.products`, while keeping `results.totalCount` as the full match count and preserving existing featured-first + recency sorting.
+- Frontend: Refactor `ProductDetailModal` to accept a required full `product` prop and render without any internal React Query/network requests; add a graceful error state for missing/invalid product fields while preserving close/focus/scroll behaviors.
+- Frontend: Update all modal-opening flows (home category sections, search autocomplete selection, search results grid/Enter flow, category page product cards) to pass the full product object into the modal.
+- Frontend: Update `ProductCard` (and impacted callers) so selection callbacks can pass the full product object, while preserving existing navigation behavior when no callback is provided.
+- Frontend: Keep `/product/$barcode` standalone product detail page behavior unchanged (continues to fetch via existing hooks).
+- Frontend: Update `SearchBar` full-results UI to align with the 10-result backend cap: show displayed count (≤ 10), render results in a responsive grid (5 columns desktop / 2 columns mobile), and when `totalCount > 10` show: "Mostrando los 10 primeros resultados. Refina tu búsqueda para más."
+- Frontend: Ensure modal Share/WhatsApp actions work using only passed-in/cached data (share URL from `product.barcode`; WhatsApp uses `formatWhatsAppApiNumber()` without modal-initiated store fetches).
 
-**User-visible outcome:** Requests to `getCategoriesWithProducts(0, N)` return up to `N` categories with correctly ordered products (featured first, then most recently updated) and a maximum of 5 products per category, while still reporting the full product count per category.
+**User-visible outcome:** Searching shows up to 10 results with clear messaging when more matches exist, and opening product details from home/search/category lists is faster and does not trigger extra fetching inside the modal; direct product URLs continue to work as before.

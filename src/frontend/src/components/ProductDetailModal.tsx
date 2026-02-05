@@ -1,26 +1,27 @@
 import React, { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useProductDetail } from '../hooks/useProductDetail';
+import { useGetAllCategories, useGetStoreDetails } from '../hooks/useQueries';
 import ProductDetailView from './ProductDetailView';
+import type { Product } from '../backend';
 
 interface ProductDetailModalProps {
-  barcode: string;
+  product: Product;
   open: boolean;
   onClose: () => void;
 }
 
-export default function ProductDetailModal({ barcode, open, onClose }: ProductDetailModalProps) {
+export default function ProductDetailModal({ product, open, onClose }: ProductDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  const {
-    product,
-    productLoading,
-    productError,
-    categoryName,
-    storeDetails,
-    isStoreDetailsLoading,
-  } = useProductDetail(barcode);
+  const { data: categories = [] } = useGetAllCategories();
+  const { data: storeDetails } = useGetStoreDetails();
+
+  const categoryName = categories.find(
+    (cat) => cat.id === product.categoryId
+  )?.name;
+
+  const isStoreDetailsLoading = !storeDetails;
 
   // Handle ESC key
   useEffect(() => {
@@ -75,6 +76,9 @@ export default function ProductDetailModal({ barcode, open, onClose }: ProductDe
 
   if (!open) return null;
 
+  // Validate required product fields
+  const hasRequiredFields = product && product.barcode && product.name && product.categoryId !== undefined;
+
   return (
     <div
       className="product-detail-modal-overlay"
@@ -90,44 +94,23 @@ export default function ProductDetailModal({ barcode, open, onClose }: ProductDe
         tabIndex={-1}
       >
         <div className="product-detail-modal-content">
-          {/* Loading state */}
-          {productLoading && (
-            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-lg text-muted-foreground">Cargando producto...</p>
-            </div>
-          )}
-
-          {/* Error state */}
-          {!productLoading && productError && (
+          {/* Invalid product state */}
+          {!hasRequiredFields && (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">⚠️</div>
               <h2 className="text-2xl font-bold text-foreground mb-2">
-                Error al cargar el producto
+                Datos de producto incompletos
               </h2>
               <p className="text-muted-foreground">
-                Hubo un problema al cargar el producto. Por favor, intenta de nuevo más tarde.
-              </p>
-            </div>
-          )}
-
-          {/* Not found state */}
-          {!productLoading && !productError && !product && (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">📦</div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                Producto no encontrado
-              </h2>
-              <p className="text-muted-foreground">
-                Lo sentimos, no pudimos encontrar el producto con el código de barras: <strong>{barcode}</strong>
+                No se pudieron cargar los datos del producto correctamente.
               </p>
             </div>
           )}
 
           {/* Product content */}
-          {!productLoading && !productError && product && (
+          {hasRequiredFields && (
             <ProductDetailView
-              barcode={barcode}
+              barcode={product.barcode}
               product={product}
               categoryName={categoryName}
               storeDetails={storeDetails}

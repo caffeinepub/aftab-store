@@ -3,7 +3,7 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useProductDetail } from '../hooks/useProductDetail';
+import { useGetProduct, useGetAllCategories, useGetStoreDetails } from '../hooks/useQueries';
 import ProductDetailView from '../components/ProductDetailView';
 
 export default function ProductDetailPage() {
@@ -14,14 +14,15 @@ export default function ProductDetailPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [fadeIn, setFadeIn] = useState(false);
 
-  const {
-    product,
-    productLoading,
-    productError,
-    categoryName,
-    storeDetails,
-    isStoreDetailsLoading,
-  } = useProductDetail(barcode);
+  const { data: product, isLoading: productLoading, isError: productError } = useGetProduct(barcode);
+  const { data: categories = [] } = useGetAllCategories();
+  const { data: storeDetails } = useGetStoreDetails();
+
+  const categoryName = categories.find(
+    (cat) => product && cat.id === product.categoryId
+  )?.name;
+
+  const isStoreDetailsLoading = !storeDetails;
 
   // Scroll to top on mount and barcode changes
   useEffect(() => {

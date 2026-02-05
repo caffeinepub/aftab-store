@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearch, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useGetCategoryById, useGetCategoryProductsPaginated } from '../hooks/useQueries';
+import { useGetCategoryById, useGetCategoryProductsPaginated, useGetStoreDetails } from '../hooks/useQueries';
 import { Button } from '../components/ui/button';
 import ProductCard from '../components/home/ProductCard';
 import ProductDetailModal from '../components/ProductDetailModal';
+import type { Product } from '../backend';
 
 const PRODUCTS_PER_PAGE = 15;
 const SCROLL_THRESHOLD = 500;
@@ -17,7 +18,7 @@ export default function CategoryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [selectedBarcode, setSelectedBarcode] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [offset, setOffset] = useState(0);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
@@ -29,6 +30,7 @@ export default function CategoryPage() {
 
   // Fetch category details
   const { data: category } = useGetCategoryById(categoryId);
+  const { data: storeDetails } = useGetStoreDetails();
 
   // Fetch initial products
   const { data: productsData, isLoading: isInitialLoading, isError } = useGetCategoryProductsPaginated(
@@ -68,7 +70,7 @@ export default function CategoryPage() {
       setAllProducts([]);
       setOffset(0);
       setHasMore(true);
-      setSelectedBarcode(null);
+      setSelectedProduct(null);
     };
   }, [queryClient, categoryId]);
 
@@ -145,12 +147,12 @@ export default function CategoryPage() {
     };
   }, [hasMore, isInitialLoading, isLoadingMore, loadMoreProducts]);
 
-  const handleProductSelect = (barcode: string) => {
-    setSelectedBarcode(barcode);
+  const handleProductSelect = (product: Product) => {
+    setSelectedProduct(product);
   };
 
   const handleCloseModal = () => {
-    setSelectedBarcode(null);
+    setSelectedProduct(null);
   };
 
   const getProductCountText = (count: number) => {
@@ -244,10 +246,10 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {selectedBarcode && (
+      {selectedProduct && (
         <ProductDetailModal
-          barcode={selectedBarcode}
-          open={!!selectedBarcode}
+          product={selectedProduct}
+          open={!!selectedProduct}
           onClose={handleCloseModal}
         />
       )}

@@ -1,20 +1,24 @@
 import React, { useState, useCallback, useRef, useEffect, memo } from 'react';
 import { Search, Loader2 } from 'lucide-react';
-import { useSearchProducts } from '../hooks/useQueries';
+import { useSearchProducts, useGetStoreDetails } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import ProductCard from './home/ProductCard';
 import ProductDetailModal from './ProductDetailModal';
 import { Skeleton } from './ui/skeleton';
+import type { Product } from '../backend';
 
 const SearchBar = memo(() => {
   const [searchValue, setSearchValue] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [showFullResults, setShowFullResults] = useState(false);
-  const [selectedBarcode, setSelectedBarcode] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   const { data: searchResults, isLoading } = useSearchProducts(debouncedSearch);
+  const { data: storeDetails } = useGetStoreDetails();
 
   // Debounce search input
   useEffect(() => {
@@ -79,21 +83,22 @@ const SearchBar = memo(() => {
     }
   };
 
-  const handleAutocompleteClick = (barcode: string) => {
+  const handleAutocompleteClick = (product: Product) => {
     setShowAutocomplete(false);
-    setSelectedBarcode(barcode);
+    setSelectedProduct(product);
   };
 
-  const handleProductSelect = (barcode: string) => {
-    setSelectedBarcode(barcode);
+  const handleProductSelect = (product: Product) => {
+    setSelectedProduct(product);
   };
 
   const handleCloseModal = () => {
-    setSelectedBarcode(null);
+    setSelectedProduct(null);
   };
 
   const autocompleteResults = searchResults?.products.slice(0, 10) || [];
   const fullResults = searchResults?.products || [];
+  const totalCount = searchResults?.totalCount ? Number(searchResults.totalCount) : 0;
   const displayFullResults = debouncedSearch.length >= 2 && showFullResults && !showAutocomplete;
 
   return (
@@ -152,7 +157,7 @@ const SearchBar = memo(() => {
                   {autocompleteResults.map((product) => (
                     <button
                       key={product.barcode}
-                      onClick={() => handleAutocompleteClick(product.barcode)}
+                      onClick={() => handleAutocompleteClick(product)}
                       className="w-full block px-4 py-3 hover:bg-accent transition-colors focus:outline-none focus:bg-accent text-left"
                       role="option"
                     >
@@ -181,7 +186,7 @@ const SearchBar = memo(() => {
         {displayFullResults && (
           <div className="space-y-6">
             {/* Results Count */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2">
               <h2 className="text-xl font-semibold text-foreground">
                 {isLoading ? (
                   'Buscando...'
@@ -193,6 +198,12 @@ const SearchBar = memo(() => {
                   `${fullResults.length} resultados encontrados`
                 )}
               </h2>
+              {/* Helper message when more than 10 results exist */}
+              {!isLoading && totalCount > 10 && (
+                <p className="text-sm text-muted-foreground">
+                  Mostrando los 10 primeros resultados. Refina tu búsqueda para más.
+                </p>
+              )}
             </div>
 
             {/* Results Grid */}
@@ -230,10 +241,10 @@ const SearchBar = memo(() => {
       </div>
 
       {/* Product Detail Modal */}
-      {selectedBarcode && (
+      {selectedProduct && (
         <ProductDetailModal
-          barcode={selectedBarcode}
-          open={!!selectedBarcode}
+          product={selectedProduct}
+          open={!!selectedProduct}
           onClose={handleCloseModal}
         />
       )}

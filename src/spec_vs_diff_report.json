@@ -1,30 +1,75 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-04T22:56:25.895Z",
-  "summary": "Cannot verify that REQ-1 was implemented because the `backend/main.mo` diff is truncated before the `getCategoriesWithProducts` function; the only clearly evidenced change is an update to `project_state.json`, which was not requested.",
+  "generatedAt": "2026-02-05T18:21:11.549Z",
+  "summary": "REQ-4 appears implemented (ProductCard onSelect now passes full product). However, key requirements are missing or not verifiable from the diff: backend search limiting to 10 (REQ-1), modal being fully prop-driven with no query hooks (REQ-2), passing full product object for all modal-opening flows (REQ-3, partially), SearchBar UI updates for 10-result limit (REQ-6), and ensuring WhatsApp/Share work without modal-initiated fetching (REQ-7). The diff also adds an unrequested infinite-scroll/load-more behavior for category display.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "In `backend/main.mo`, restore `getCategoriesWithProducts(offset: Nat, limit: Nat)` to match the specified implementation (category sort by `order`, paginate via `sliceToArray(offset, endIndex)`, filter by `categoryId`, sort products featured-first then `lastUpdatedDate` desc with same null-handling, and return up to 5 products per category while keeping `productCount` as total).",
-      "reason": "The provided `backend/main.mo` diff content is truncated and does not include `getCategoriesWithProducts`, so there is no evidence that the required pagination and 5-product slice logic were restored (or that the incorrect `sliceToArray(endIndex, endIndex)` / `sliceToArray(0, 0)` lines were removed).",
+      "requirement": "Update backend searchProducts(criteria) to return at most 10 products in results.products while keeping totalCount as total matches and preserving featured-first + recency sorting.",
+      "reason": "backend/main.mo is truncated and the diff snippet does not show any changes to searchProducts() implementing a 10-item cap while preserving sorting and totalCount semantics.",
       "evidence": [
-        "backend/main.mo (truncated; `getCategoriesWithProducts` not shown)"
+        "backend/main.mo (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Refactor ProductDetailModal so it does not fetch product/category/store data internally and makes no React Query calls; it must render from a passed-in full product prop.",
+      "reason": "ProductDetailModal still calls React Query hooks (useGetAllCategories, useGetStoreDetails), which can trigger network requests when opening the modal.",
+      "evidence": [
+        "frontend/src/components/ProductDetailModal.tsx"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Update all modal-opening flows to pass the complete product object into ProductDetailModal (home cards, search autocomplete click, search results grid Enter flow, category page cards).",
+      "reason": "HomePage and SearchBar show selectedProduct being stored as Product and passed to ProductDetailModal, but the diff does not provide enough evidence that the CategoryPage product-card flow is wired to pass Product objects via ProductCard onSelect (CategoryPage is truncated around rendering).",
+      "evidence": [
+        "frontend/src/pages/HomePage.tsx",
+        "frontend/src/components/SearchBar.tsx (truncated)",
+        "frontend/src/pages/CategoryPage.tsx (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Update SearchBar UI: show displayed result count (<=10) as main label, render full results in responsive grid (5 desktop, 2 mobile), and when totalCount > 10 show helper message exactly: \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\"",
+      "reason": "SearchBar diff is truncated and does not show the count label logic, the 2/5-column grid implementation, or the exact helper message rendering. The only visible logic is slicing autocomplete to 10 and using searchResults?.products for full results.",
+      "evidence": [
+        "frontend/src/components/SearchBar.tsx (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "requirement": "Ensure WhatsApp and Share actions in the modal work using only passed-in product data (share URL from product.barcode; WhatsApp uses formatWhatsAppApiNumber with phone number not fetched by modal).",
+      "reason": "ProductDetailModal still fetches storeDetails via useGetStoreDetails, which violates the requirement to avoid modal-initiated fetching for WhatsApp; also the diff does not show how share/WhatsApp URLs are built in ProductDetailView for the modal context.",
+      "evidence": [
+        "frontend/src/components/ProductDetailModal.tsx"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Updated `project_state.json` project summary/feature inventory metadata.",
-      "reason": "The BuildRequest only asks to restore backend pagination/slicing logic in `backend/main.mo` and explicitly constrains the fix to backend logic; it does not request updating repository state/metadata files.",
+      "description": "Infinite scroll / load-more behavior for the home categories display (IntersectionObserver with 'Cargando más categorías...' loader and progressively increasing displayed categories).",
+      "reason": "The BuildRequest focuses on making ProductDetailModal prop-driven and limiting search results to 10; it does not request adding an infinite-scroll/load-more mechanism for categories on the home page.",
       "evidence": [
-        "project_state.json"
+        "frontend/src/components/home/CategoriesDisplay.tsx"
       ]
     }
   ],
   "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/ProductDetailModal.tsx",
+    "frontend/src/components/SearchBar.tsx",
+    "frontend/src/components/home/CategoriesDisplay.tsx",
+    "frontend/src/components/home/CategorySection.tsx",
+    "frontend/src/components/home/ProductCard.tsx",
+    "frontend/src/components/home/ProductGrid.tsx",
+    "frontend/src/hooks/useProductDetail.ts",
+    "frontend/src/pages/CategoryPage.tsx",
+    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/pages/ProductDetailPage.tsx",
     "project_state.json"
   ]
 }

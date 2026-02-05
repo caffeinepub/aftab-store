@@ -9,7 +9,7 @@ const DEFAULT_IMAGE = 'https://i.imgur.com/epm4DO1.jpeg';
 
 interface ProductCardProps {
   product: Product;
-  onSelect?: (barcode: string) => void;
+  onSelect?: (product: Product) => void;
 }
 
 export default function ProductCard({ product, onSelect }: ProductCardProps) {
@@ -41,7 +41,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
 
   const handleClick = () => {
     if (onSelect) {
-      onSelect(product.barcode);
+      onSelect(product);
     } else {
       navigate({ to: '/product/$barcode', params: { barcode: product.barcode } });
     }

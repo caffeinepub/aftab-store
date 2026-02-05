@@ -1,451 +1,86 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 9,
-  "summary": "Aftab Store (Aftab Retail) is an Internet Computer (ICP) canister-backed web application that provides (1) a public storefront for browsing a categorized product catalog, searching products, viewing product details, and contacting the store, and (2) an authenticated admin dashboard for managing products, categories, store details, administrator roles, and bulk JSON imports. The frontend is a React + TypeScript SPA using TanStack Router for routing and TanStack React Query for canister calls/caching, styled with TailwindCSS and shadcn/ui, and includes a custom toast notification system and an admin session keep-alive worker. The backend is a Motoko canister composed via mixins for authorization and blob-storage operations, storing catalog and store configuration in in-canister maps.",
+  "projectStateVersion": 3,
+  "summary": "Optimize ProductDetailModal to be fully prop-driven (no internal API calls) when opened from home/category/search, while keeping standalone product page behavior for direct URL access; limit backend search results to 10 with corresponding frontend messaging/layout updates.",
+  "architectural_notes": [
+    "Do not remove/modify/overwrite the :root CSS custom properties block in index.css containing theme color variables; append new CSS styles only below this block without changes."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "IF-1",
-      "title": "Public storefront and admin dashboard routing",
-      "synonyms": [
-        "TanStack Router route tree",
-        "PublicLayout",
-        "AdminRoute"
+      "id": "feature-refactor-frontend-src-components-productdetailmodal-tsx-so-it-does-not-fetch-product-category-store-data-internally-no-useproductdetail-usegetproduct-usegetallcategories-or-usegetstoredetails-the-modal-must-render-using-a-full-product-object-passed-via-props-and-must-not-make-any-react-query-calls-that-trigger-network-requests",
+      "title": "Refactor `frontend/src/components/ProductDetailModal.tsx` so it does not fetch product/category/store data internally (no `useProductDetail`, `useGetProduct`, `useGetAllCategories`, or `useGetStoreDetails`). The modal must render using a full `product` object passed via props and must not make any React Query calls that trigger network requests.",
+      "reqIds": [
+        "REQ-2"
       ],
-      "description": "Client-side routing splits the app into public pages (home, category, product detail, contact, privacy) and admin pages (dashboard, products, categories, admin users, store details, import) with nested layouts and guarded admin access.",
-      "reqIds": [],
       "version": 1
     },
     {
-      "id": "IF-2",
-      "title": "Public header navigation with categories dropdown and mobile slide-in menu",
-      "synonyms": [
-        "PublicHeader",
-        "CategoriesDropdown",
-        "MobileMenu"
+      "id": "feature-update-all-modal-opening-ui-flows-to-pass-the-complete-product-object-not-just-barcode-into-productdetailmodal-specifically-from-1-home-page-product-cards-rendered-from-usegetcategorieswithproducts-2-home-page-search-autocomplete-click-3-home-page-search-results-grid-enter-key-flow-and-4-category-page-product-cards-rendered-from-usegetcategoryproductspaginated",
+      "title": "Update all modal-opening UI flows to pass the complete `product` object (not just barcode) into `ProductDetailModal`, specifically from: (1) Home page product cards rendered from `useGetCategoriesWithProducts()`, (2) Home page search autocomplete click, (3) Home page search results grid (Enter key flow), and (4) Category page product cards rendered from `useGetCategoryProductsPaginated()`.",
+      "reqIds": [
+        "REQ-3"
       ],
-      "description": "Public header provides desktop navigation (Inicio, Categorías, Contacto) with dynamically fetched categories dropdown and a mobile slide-in menu with backdrop, Escape-to-close, and body scroll locking; category navigation uses /category?id=... query parameters.",
-      "reqIds": [],
       "version": 1
     },
     {
-      "id": "IF-3",
-      "title": "Homepage store banner with dynamic WhatsApp CTA",
-      "synonyms": [
-        "StoreBanner"
+      "id": "feature-adjust-frontend-src-components-home-productcard-tsx-and-any-other-impacted-callers-so-the-selection-callback-can-pass-the-full-product-object-to-parent-components-enabling-prop-driven-modal-opening-without-follow-up-lookups",
+      "title": "Adjust `frontend/src/components/home/ProductCard.tsx` (and any other impacted callers) so the selection callback can pass the full `product` object to parent components, enabling prop-driven modal opening without follow-up lookups.",
+      "reqIds": [
+        "REQ-4"
       ],
-      "description": "Homepage hero banner renders branding and marketing text and conditionally shows a WhatsApp ordering link once store details are loaded (with fallback number if not loaded).",
-      "reqIds": [],
       "version": 1
     },
     {
-      "id": "IF-4",
-      "title": "Homepage category sections with incremental reveal",
-      "synonyms": [
-        "CategoriesDisplay",
-        "CategorySection",
-        "IntersectionObserver"
+      "id": "feature-keep-the-standalone-product-detail-page-behavior-unchanged-for-direct-url-access-e-g-product-barcode-route-the-standalone-page-should-continue-using-the-existing-product-category-store-fetching-approach-and-should-not-rely-on-modal-prop-passing",
+      "title": "Keep the standalone product detail page behavior unchanged for direct URL access (e.g., `/product/$barcode` route). The standalone page should continue using the existing product/category/store fetching approach and should not rely on modal prop passing.",
+      "reqIds": [
+        "REQ-5"
       ],
-      "description": "Homepage renders category sections and incrementally reveals more categories using an IntersectionObserver sentinel and responsive initial counts for mobile vs desktop, passing product selection callbacks down to open a modal.",
-      "reqIds": [],
       "version": 1
     },
     {
-      "id": "IF-5",
-      "title": "Reusable product cards with image fallback and stock/featured indicators",
-      "synonyms": [
-        "home/ProductCard",
-        "ProductCard",
-        "StockBadge",
-        "featured-badge"
+      "id": "feature-update-the-search-ui-in-frontend-src-components-searchbar-tsx-to-reflect-the-backend-s-10-result-maximum-show-the-displayed-result-count-10-as-the-main-count-label-render-results-in-a-responsive-grid-5-per-row-on-desktop-2-per-row-on-mobile-and-when-totalcount-10-show-the-helper-message-exactly-mostrando-los-10-primeros-resultados-refina-tu-b-squeda-para-m-s",
+      "title": "Update the search UI in `frontend/src/components/SearchBar.tsx` to reflect the backend’s 10-result maximum: show the displayed result count (≤ 10) as the main count label, render results in a responsive grid (5 per row on desktop, 2 per row on mobile), and when `totalCount > 10`, show the helper message exactly: \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\"",
+      "reqIds": [
+        "REQ-6"
       ],
-      "description": "Product cards display image with fallback, name/description, stock badge, and optional featured badge; cards either navigate to /product/$barcode or invoke an onSelect callback for opening a modal.",
-      "reqIds": [],
       "version": 1
     },
     {
-      "id": "IF-6",
-      "title": "Public product search with debounce, autocomplete, and full results grid",
-      "synonyms": [
-        "SearchBar",
-        "useSearchProducts"
+      "id": "feature-ensure-whatsapp-and-share-actions-in-the-modal-continue-to-work-using-only-the-passed-in-product-data-the-share-url-must-be-derived-from-product-barcode-and-the-whatsapp-link-must-use-formatwhatsappapinumber-with-a-phone-number-sourced-without-modal-initiated-api-fetching-e-g-passed-from-parent-or-read-from-an-already-cached-store-details-value",
+      "title": "Ensure WhatsApp and Share actions in the modal continue to work using only the passed-in product data: the share URL must be derived from `product.barcode`, and the WhatsApp link must use `formatWhatsAppApiNumber()` with a phone number sourced without modal-initiated API fetching (e.g., passed from parent or read from an already-cached store details value).",
+      "reqIds": [
+        "REQ-7"
       ],
-      "description": "Debounced search (min 2 chars) queries the backend and shows an autocomplete dropdown (top results). Pressing Enter switches to a full results mode that renders products in a responsive grid and opens product details in a modal from results.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-7",
-      "title": "Non-routing product details modal (public pages)",
-      "synonyms": [
-        "ProductDetailModal",
-        "ProductDetailView"
-      ],
-      "description": "Product details can be displayed as a modal overlay without URL changes from Home/Category/Search, including backdrop click to close, Escape-to-close, scroll position preservation, and focus restoration to the previously focused element.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-8",
-      "title": "Category page with infinite-scroll product listing and modal viewing",
-      "synonyms": [
-        "CategoryPage",
-        "getCategoryProductsPaginated"
-      ],
-      "description": "Category page fetches category metadata and a paginated product list and implements near-bottom infinite scrolling; selecting a product opens ProductDetailModal without route navigation.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-9",
-      "title": "Standalone product detail route",
-      "synonyms": [
-        "ProductDetailPage",
-        "/product/$barcode"
-      ],
-      "description": "Public product detail page accessible via /product/{barcode} with loading/error/not-found states, scroll-to-top behavior, dynamic document title updates, and product query cleanup on unmount.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-10",
-      "title": "Shared product detail actions (copy/share/WhatsApp/category navigation)",
-      "synonyms": [
-        "ProductDetailView"
-      ],
-      "description": "Product detail view includes copy barcode, copy share URL, category navigation link, stock/featured badges, and a WhatsApp contact button with a prefilled message using the store WhatsApp number.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-11",
-      "title": "Contact page with store hours and Google Maps embed",
-      "synonyms": [
-        "ContactPage"
-      ],
-      "description": "Contact page fetches store details and renders address, phone/WhatsApp/email links, weekly store hours, a Google Maps embed, and external links for search and directions with loading/error states.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-12",
-      "title": "Privacy policy page and cookie consent banner",
-      "synonyms": [
-        "PrivacyPage",
-        "CookieConsent"
-      ],
-      "description": "Spanish privacy policy page interpolates store name from store details; cookie consent banner is shown on first visit and persisted in localStorage with accept/decline options, and is suppressed on the privacy route.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-13",
-      "title": "Dynamic footer with formatted contact links",
-      "synonyms": [
-        "Footer",
-        "phoneFormatter"
-      ],
-      "description": "Footer fetches store details and displays store name/address and formatted phone/WhatsApp links (hidden until store details load), plus navigation links to contact and privacy pages and placeholder social links.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-14",
-      "title": "Custom toast notification system",
-      "synonyms": [
-        "toastStore",
-        "Toast",
-        "ToastContainer",
-        "useToast"
-      ],
-      "description": "Global toast system implemented via Zustand with auto-dismiss timers, pause-on-hover, manual dismiss, fixed stacking container, and accessibility attributes; helper hook provides success/error/warning/info APIs.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-15",
-      "title": "Internet Identity authentication integration",
-      "synonyms": [
-        "InternetIdentityProvider",
-        "AuthClient"
-      ],
-      "description": "Frontend integrates ICP Internet Identity for authentication with identity persistence, login/logout actions, and detailed status flags via React context.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-16",
-      "title": "Admin route guard with permission checks and loading states",
-      "synonyms": [
-        "AdminRoute",
-        "useAdminStatus",
-        "LoadingSpinner",
-        "AccessDenied"
-      ],
-      "description": "Admin section is gated by authentication and an isCallerAdmin canister check; renders login screen, a loading spinner during verification, or an access denied screen showing principal ID with copy-to-clipboard and logout cleanup.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-17",
-      "title": "Admin dashboard layout with responsive sidebar and header",
-      "synonyms": [
-        "DashboardLayout",
-        "SidebarNavigation",
-        "DashboardHeader"
-      ],
-      "description": "Admin layout includes a fixed header, responsive sidebar that auto-closes on mobile and supports active-route styling, and an outlet-based main content area with footer attribution.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-18",
-      "title": "Admin session keep-alive via Web Worker",
-      "synonyms": [
-        "session-worker",
-        "terminateSessionWorker"
-      ],
-      "description": "A Web Worker posts keep-alive messages every 60 seconds; the main thread dispatches synthetic mousemove events to prevent session idle expiry. Worker lifecycle is managed on mount/unmount and logout.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-19",
-      "title": "Admin dashboard home with navigation cards",
-      "synonyms": [
-        "DashboardHome",
-        "DashboardCards"
-      ],
-      "description": "Admin landing page shows a welcome message and a responsive grid of cards linking to admin sections (products, categories, administrators, store details, import).",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-20",
-      "title": "Admin products management (pagination and filters)",
-      "synonyms": [
-        "ProductsPage",
-        "getProducts"
-      ],
-      "description": "Admin products page supports paginated listing with configurable page size, debounced search, category filter, featured-only filter, responsive table/mobile card views, and page navigation controls.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-21",
-      "title": "Admin product CRUD with client-side WebP compression",
-      "synonyms": [
-        "ProductModal",
-        "addProduct",
-        "updateProduct"
-      ],
-      "description": "Admin can add/edit products (barcode, name, category, description, in-stock, featured) and upload a product photo that is validated and compressed to WebP client-side before sending to the canister as ExternalBlob, with preview and removal.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-22",
-      "title": "Admin product deletion with password confirmation",
-      "synonyms": [
-        "DeleteProductDialog",
-        "deleteProduct"
-      ],
-      "description": "Deleting a product requires typing a fixed confirmation phrase (\"DeleteIsUnsafe\") before enabling the destructive action.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-23",
-      "title": "Admin stock and featured status toggles",
-      "synonyms": [
-        "toggleStock",
-        "updateProductFeaturedStatus"
-      ],
-      "description": "Admin can toggle product in-stock state and featured state via dedicated canister endpoints; UI reflects pending state and triggers React Query invalidation to refresh dependent lists.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-24",
-      "title": "Admin categories management (CRUD and search)",
-      "synonyms": [
-        "CategoriesPage",
-        "CategoryModal",
-        "addCategory",
-        "updateCategory",
-        "deleteCategory"
-      ],
-      "description": "Admin can list/search categories by name/ID, add/edit via modal, and delete with confirmation; UI handles backend constraint errors when a category contains products.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-25",
-      "title": "Admin category reorder controls",
-      "synonyms": [
-        "reorderCategory",
-        "up/down order swap"
-      ],
-      "description": "Admin can reorder categories via up/down controls implemented by swapping order values through the reorderCategory endpoint.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-26",
-      "title": "Bulk category creation modal UI",
-      "synonyms": [
-        "BulkCreateModal"
-      ],
-      "description": "Modal supports entering one category name per line, generating a live preview table with auto-incremented order values prior to save.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-27",
-      "title": "Admin user role management UI (promote/demote admins)",
-      "synonyms": [
-        "AdminUsersPage",
-        "assignUserRole",
-        "removeAdminRole"
-      ],
-      "description": "Admin UI supports adding principals as admins, searching/filtering by role, promoting/demoting with confirmation dialogs, copy-to-clipboard for principal IDs, and frontend guard against removing the last admin.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-28",
-      "title": "Store details management with validation and live preview",
-      "synonyms": [
-        "StoreDetailsPage",
-        "updateStoreDetails"
-      ],
-      "description": "Admin can update store name, banner image (compressed to WebP), address, phone, WhatsApp, email, store hours, and map coordinates with validation, reset-to-original behavior, and a live preview panel reflecting current form state.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-29",
-      "title": "Bulk import of categories and products from JSON",
-      "synonyms": [
-        "ImportPage",
-        "importProducts",
-        "bulkImportCategories"
-      ],
-      "description": "Admin import page supports drag-and-drop JSON upload for categories/products with BigInt-aware parsing, robust value conversion (including stock->boolean and optional isFeatured), line-numbered validation errors, previews, and automatic import triggering after successful validation.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-30",
-      "title": "React Query canister data access layer",
-      "synonyms": [
-        "useQueries hooks",
-        "stableActor pattern",
-        "query invalidation"
-      ],
-      "description": "Centralized React Query hooks cover user profiles, admin status, roles, categories (including paginated and with-products), products (including featured and category pagination), search, and store details; write hooks invalidate dependent queries to keep UI consistent.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-31",
-      "title": "BigInt-safe JSON parsing and serialization utilities",
-      "synonyms": [
-        "BigIntSerializer",
-        "parseJSONWithBigInt",
-        "stringifyWithBigInt"
-      ],
-      "description": "Utilities provide validated BigInt conversions and a JSON reviver that converts Date/Timestamp/id-like fields into BigInt when possible, supporting ICP binding types and import workflows.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-32",
-      "title": "Phone number normalization and Spanish formatting utilities",
-      "synonyms": [
-        "phoneFormatter",
-        "formatWhatsAppApiNumber",
-        "formatSpanishPhoneDisplay"
-      ],
-      "description": "Helpers normalize phone numbers for WhatsApp/tel links and format them for Spanish display (+34 XXX XX XX XX) with fallbacks.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-33",
-      "title": "Backend access control initialization and role checks",
-      "synonyms": [
-        "AccessControl",
-        "MixinAuthorization",
-        "CAFFEINE_ADMIN_TOKEN"
-      ],
-      "description": "Motoko access control stores per-principal roles and enforces role-gated operations. First principal to initialize with a matching secret token becomes admin; others become users. Exposes role checks and role assignment APIs.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-34",
-      "title": "Backend blob storage maintenance endpoints",
-      "synonyms": [
-        "MixinStorage",
-        "gateway principal auth",
-        "dead blob pruning",
-        "cycles refill"
-      ],
-      "description": "Blob-storage mixin supports refreshing an authorized gateway principal list, listing and pruning dead blobs with authorization checks, and cashier-controlled cycles refill.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-35",
-      "title": "Backend catalog and store configuration APIs",
-      "synonyms": [
-        "Categories",
-        "Products",
-        "StoreDetails",
-        "UserProfile"
-      ],
-      "description": "Canister stores categories and products (with admin-gated CRUD, pagination, stock/featured toggles, per-category queries, and featured lists), store details (public read, admin create/update), and per-principal user profiles (caller read/write and admin read for others).",
-      "reqIds": [],
       "version": 1
     }
   ],
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "In `backend/main.mo`, restore `getCategoriesWithProducts(offset: Nat, limit: Nat)` to match the user-provided implementation exactly: (1) sort categories by `order` ascending, (2) paginate categories using `sliceToArray(offset, endIndex)`, (3) for each category, filter products by `categoryId`, (4) sort products with `isFeatured` first and then `lastUpdatedDate` descending with the same null-handling logic, and (5) return at most 5 products per category using `sliceToArray(0, min(sortedProducts.size(), 5))` while still returning `productCount = categoryProducts.size()`.",
+      "summary": "Refactor ProductDetailModal to receive full product data via props and remove internal API calls (useGetProduct/useGetAllCategories/useGetStoreDetails); update all calling components (home cards, search autocomplete/results, category cards) to pass product object; keep standalone /product page unchanged.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Limit backend searchProducts() to return max 10 records (keeping existing sorting), and update frontend search results UI to reflect limited results with count, grid layout, and 'showing first 10' message when applicable.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Update the backend `searchProducts(criteria : ProductSearchCriteria)` in `backend/main.mo` to return at most 10 products in `ProductSearchResults.products`, while keeping `totalCount` as the total number of matches and preserving the existing featured-first + recency sorting behavior.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
     }
   ],
-  "architectural_notes": [
-    "Frontend is a React SPA using TanStack Router with nested layouts: PublicLayout for storefront pages and DashboardLayout behind an AdminRoute guard for admin pages.",
-    "Canister communication is centralized in React Query hooks (frontend/src/hooks/useQueries.ts) that call an ICP actor supplied by useActor().",
-    "useActor() constructs anonymous vs authenticated actors (Internet Identity/AuthClient) and initializes access control via _initializeAccessControlWithSecret using a secret token from the URL hash/session, then invalidates/refetches dependent queries on actor changes.",
-    "Most GET hooks implement a 'stable actor' pattern (store actor in local state once identity/actor fetching stabilizes) to reduce duplicate requests from actor reference churn; queries generally disable refetchOnWindowFocus and refetchOnMount and use tuned staleTime values.",
-    "Write operations use React Query mutations with targeted invalidation of related query keys to keep lists and detail views consistent.",
-    "UI is built with TailwindCSS theme tokens (OKLCH variables), shadcn/ui primitives, and Lucide icons, with custom CSS for modal, toast, and cookie-consent behaviors.",
-    "Toast notifications are implemented as a global Zustand store with auto-dismiss timers, pause-on-hover, and an always-mounted ToastContainer.",
-    "Admin sessions use a Web Worker to periodically send keep-alive messages; the main thread dispatches synthetic mousemove events to avoid idle expiry.",
-    "Backend is a Motoko actor composed using mixins: MixinAuthorization for roles/access control and a blob-storage mixin for gateway authorization, dead-blob pruning, and cycles refill.",
-    "Domain models use Nat/Time/Float on the canister; generated TypeScript bindings expose BigInt for Nat/Time-like fields and the frontend includes BigInt-aware JSON parsing utilities for import workflows."
-  ],
-  "known_issues": [
-    "frontend/src/pages/CategoryPage.tsx infinite-scroll loadMoreProducts() uses (window as any).__actor__ instead of useActor()/existing hooks, which can break pagination when __actor__ is unset.",
-    "backend/main.mo:getAllUserRoles() always returns an empty array, so the Admin Users UI cannot list existing roles even though role assignment endpoints exist.",
-    "backend/main.mo:importProducts() discards imported photo and isFeatured for new products (forces photo=null and isFeatured=false), conflicting with the frontend import UI which supports isFeatured and can represent photos.",
-    "backend/main.mo:searchProducts() returns the full filtered list without pagination but computes totalPages using a fixed pageSize=10, which can be misleading and expensive for large catalogs.",
-    "frontend/src/components/home/CategoriesDisplay.tsx fetches categoriesWithProducts via direct actor call instead of useGetCategoriesWithProducts, duplicating requests and bypassing React Query caching/invalidation.",
-    "backend/blob-storage/Storage.mo expects env var \"CAFFFEINE_STORAGE_CASHIER_PRINCIPAL\" (typo with extra 'F'); deployments must match this exact name or the canister will trap when accessed.",
-    "backend/authorization/MixinAuthorization.mo traps if env var \"CAFFEINE_ADMIN_TOKEN\" is not set, preventing role initialization for authenticated users.",
-    "frontend/src/components/ProductDetailView.tsx uses an <img> key containing Date.now(), causing unnecessary remounts/reloads of the product image on re-render.",
-    "frontend/src/components/ProductDetailModal.tsx focuses the modal container but does not implement a full focus trap among focusable children, which may reduce accessibility.",
-    "backend: getCategoriesWithProducts() regressed to `sortedProducts.sliceToArray(0, 0)` causing homepage categories-with-products to always return 0 products per category; should restore proper 5-product slice with featured-first sorting and productCount metadata."
-  ],
-  "isFixRequest": true,
   "gameProjectType": "none",
-  "projectName": "Aftab Store",
-  "clarification_mode": "pro",
+  "projectName": "Optimize ProductDetailModal to be prop-driven and limit search results to 10",
+  "clarification_mode": "instant",
   "clarification_rounds": 0
 }
