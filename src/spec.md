@@ -1,15 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Make product search return/display at most 10 items and refactor `ProductDetailModal` to be fully prop-driven (no internal fetching), while keeping the standalone product page unchanged.
+**Goal:** Fix the ProductDetailModal double-click-to-close issue by correcting history state and popstate handling so the modal reliably closes with a single close action while preserving existing close behaviors.
 
 **Planned changes:**
-- Backend: Update `searchProducts(criteria : ProductSearchCriteria)` to return a maximum of 10 products in `results.products`, while keeping `results.totalCount` as the full match count and preserving existing featured-first + recency sorting.
-- Frontend: Refactor `ProductDetailModal` to accept a required full `product` prop and render without any internal React Query/network requests; add a graceful error state for missing/invalid product fields while preserving close/focus/scroll behaviors.
-- Frontend: Update all modal-opening flows (home category sections, search autocomplete selection, search results grid/Enter flow, category page product cards) to pass the full product object into the modal.
-- Frontend: Update `ProductCard` (and impacted callers) so selection callbacks can pass the full product object, while preserving existing navigation behavior when no callback is provided.
-- Frontend: Keep `/product/$barcode` standalone product detail page behavior unchanged (continues to fetch via existing hooks).
-- Frontend: Update `SearchBar` full-results UI to align with the 10-result backend cap: show displayed count (≤ 10), render results in a responsive grid (5 columns desktop / 2 columns mobile), and when `totalCount > 10` show: "Mostrando los 10 primeros resultados. Refina tu búsqueda para más."
-- Frontend: Ensure modal Share/WhatsApp actions work using only passed-in/cached data (share URL from `product.barcode`; WhatsApp uses `formatWhatsAppApiNumber()` without modal-initiated store fetches).
+- Update `frontend/src/components/ProductDetailModal.tsx` to push exactly one history entry when the modal opens, tracked via a `historyPushedRef`.
+- Implement a unified close handler guarded by an `isClosingRef` that uses `window.history.back()` only when a modal history entry was pushed; otherwise call `onClose()` directly.
+- Add/adjust a `popstate` listener so that while the modal is open, it clears internal history-tracking refs and calls `onClose()` to reliably close the modal via browser back and via the close button’s `history.back()`.
+- Keep overlay click-to-close and ESC-to-close behavior unchanged; do not alter modal structure, styling, layout, or close button positioning.
 
-**User-visible outcome:** Searching shows up to 10 results with clear messaging when more matches exist, and opening product details from home/search/category lists is faster and does not trigger extra fetching inside the modal; direct product URLs continue to work as before.
+**User-visible outcome:** The ProductDetailModal closes with a single click on the close (X) button, and the browser back button closes the modal without navigating away from the current in-app page.

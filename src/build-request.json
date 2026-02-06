@@ -1,154 +1,42 @@
 {
   "kind": "build_request",
-  "title": "Optimize ProductDetailModal to be prop-driven and limit search results to 10",
+  "title": "Fix ProductDetailModal double-click close by correcting history/popstate handling",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the backend `searchProducts(criteria : ProductSearchCriteria)` in `backend/main.mo` to return at most 10 products in `ProductSearchResults.products`, while keeping `totalCount` as the total number of matches and preserving the existing featured-first + recency sorting behavior.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "user-1"
-        ],
-        "quotes": [
-          "**Backend Search API Update:** ... `searchProducts()` returns maximum 10 records ... **Sorting:** Maintain existing sorting logic (featured first, then by relevance/date)"
-        ]
-      },
-      "acceptanceCriteria": [
-        "For any query that matches more than 10 products, `searchProducts()` returns exactly 10 products in `results.products`.",
-        "`results.totalCount` reflects the true number of matches (may be > 10).",
-        "Returned products are sorted with featured products first, then by most recently updated/created (consistent with existing product sorting patterns in the canister).",
-        "No other search filtering behavior is changed."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Refactor `frontend/src/components/ProductDetailModal.tsx` so it does not fetch product/category/store data internally (no `useProductDetail`, `useGetProduct`, `useGetAllCategories`, or `useGetStoreDetails`). The modal must render using a full `product` object passed via props and must not make any React Query calls that trigger network requests.",
+      "text": "Update `frontend/src/components/ProductDetailModal.tsx` history management so the modal closes on a single click of the close button by properly coordinating `history.pushState`, `window.history.back()`, and the `popstate` listener using refs to avoid race conditions. Specifically: (a) when `open` becomes true, push a history state once and set a `historyPushedRef` flag; (b) implement a unified close handler guarded by `isClosingRef` that calls `window.history.back()` only when a modal history entry was pushed (otherwise calls `onClose()` directly) and does not clear `historyPushedRef` before triggering `back()`; (c) add a `popstate` listener that, while the modal is open, clears `historyPushedRef` and calls `onClose()` so browser back (and the close button’s `history.back()`) reliably closes the modal in one action.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "user-1"
+          "msg-6"
         ],
         "quotes": [
-          "**New requirement:** ProductDetailModal receives product data as props from the calling component",
-          "**No API calls:** Modal should not make any `useGetProduct()` API calls internally",
-          "**No category/store calls:** Remove `useGetAllCategories()` and `useGetStoreDetails()` calls from modal"
+          "Fix the double-click-to-close issue in the ProductDetailModal component by properly handling history.pushState and popstate events, ensuring the close button closes the modal immediately while maintaining support for overlay click, ESC key, and browser back button functionality."
         ]
       },
       "acceptanceCriteria": [
-        "`ProductDetailModal` accepts a required `product` prop (full product object) and an `onClose` handler; opening the modal does not trigger any product/category/store fetch requests.",
-        "All existing modal behaviors remain (ESC to close, click-outside to close, focus trap, and body scroll lock).",
-        "If required product fields are missing/invalid, the modal shows a graceful error state instead of attempting to fetch."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Update all modal-opening UI flows to pass the complete `product` object (not just barcode) into `ProductDetailModal`, specifically from: (1) Home page product cards rendered from `useGetCategoriesWithProducts()`, (2) Home page search autocomplete click, (3) Home page search results grid (Enter key flow), and (4) Category page product cards rendered from `useGetCategoryProductsPaginated()`.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "user-1"
-        ],
-        "quotes": [
-          "Pass the complete product object to modal when card is clicked",
-          "Search autocomplete provides product data from search results ... Pass the complete product object from search results to modal",
-          "Search results already contain full product data ... Pass the complete product object from search result cards to modal",
-          "Category page already has product data ... Pass the complete product object from category product cards to modal"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Home page product-card clicks open the modal without any additional product fetch.",
-        "Search autocomplete suggestion clicks open the modal using the selected suggestion’s product object, without any additional product fetch.",
-        "Search full results card clicks open the modal using the selected card’s product object, without any additional product fetch.",
-        "Category page product-card clicks open the modal using the selected card’s product object, without any additional product fetch."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Adjust `frontend/src/components/home/ProductCard.tsx` (and any other impacted callers) so the selection callback can pass the full `product` object to parent components, enabling prop-driven modal opening without follow-up lookups.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "user-1"
-        ],
-        "quotes": [
-          "Pass the complete product object to modal when card is clicked"
-        ]
-      },
-      "acceptanceCriteria": [
-        "`ProductCard` supports an `onSelect` callback that receives the `product` object (not only `barcode`).",
-        "Existing navigation behavior (when `onSelect` is not provided) continues to route to the standalone product detail page as it does today."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Keep the standalone product detail page behavior unchanged for direct URL access (e.g., `/product/$barcode` route). The standalone page should continue using the existing product/category/store fetching approach and should not rely on modal prop passing.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "user-1"
-        ],
-        "quotes": [
-          "**Standalone Product Page Unchanged:** ... Continue using current implementation ... Still uses `useGetProduct()` ... still uses `useGetAllCategories()` and `useGetStoreDetails()`"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Directly navigating to a product detail URL continues to load product details via existing query hooks and renders the page as before.",
-        "No regressions in loading/error/not-found states on the standalone product page."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Update the search UI in `frontend/src/components/SearchBar.tsx` to reflect the backend’s 10-result maximum: show the displayed result count (≤ 10) as the main count label, render results in a responsive grid (5 per row on desktop, 2 per row on mobile), and when `totalCount > 10`, show the helper message exactly: \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\"",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "user-1"
-        ],
-        "quotes": [
-          "**Frontend Search Display:** Show \"X resultados encontrados\" (where X can be ≤ 10)",
-          "**Grid layout:** Display up to 10 results in grid (5 per row desktop, 2 per row mobile)",
-          "**Message for many results:** If more than 10 matches exist, show \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\""
-        ]
-      },
-      "acceptanceCriteria": [
-        "When search matches > 10 products, the results grid displays 10 cards maximum and shows the helper message verbatim.",
-        "The count label uses the number of displayed results (≤ 10) while still allowing logic to detect when more results exist using `totalCount`.",
-        "Grid layout is 2 columns on mobile and 5 columns on desktop for the full results section.",
-        "Autocomplete remains capped at 10 suggestions (no behavioral change needed)."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Ensure WhatsApp and Share actions in the modal continue to work using only the passed-in product data: the share URL must be derived from `product.barcode`, and the WhatsApp link must use `formatWhatsAppApiNumber()` with a phone number sourced without modal-initiated API fetching (e.g., passed from parent or read from an already-cached store details value).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "user-1"
-        ],
-        "quotes": [
-          "WhatsApp button uses phone formatting utilities (already available functions)",
-          "Share button generates URL using product barcode from props",
-          "**No API call needed** - use cached or context-based phone number"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Share copies a URL based on the selected product’s barcode and does not depend on barcode-only state.",
-        "WhatsApp button uses `formatWhatsAppApiNumber()` and functions without causing the modal to fetch store details.",
-        "Modal action buttons function correctly when opened from home, search, and category sources."
+        "When the ProductDetailModal is open, clicking the close (X) button closes the modal with a single click (no second click required).",
+        "When the ProductDetailModal is open, pressing the browser back button closes the modal and the user remains on the same in-app page (e.g., Home/Category/Search) without navigating away.",
+        "Opening the ProductDetailModal pushes exactly one history entry per open cycle (no repeated pushes while it remains open).",
+        "Closing via the close button uses `window.history.back()` only when a modal history entry was pushed; otherwise it calls `onClose()` directly.",
+        "The `popstate` handler closes the modal reliably during the open state and resets internal history-tracking refs so subsequent opens/closes behave consistently.",
+        "Overlay click-to-close and ESC-to-close continue to function (no regressions).",
+        "Do not change modal structure, styling, layout, or close button positioning in the UI."
       ]
     }
   ],
   "constraints": [
-    "Do not remove, modify, or overwrite the `:root` CSS custom properties block in `frontend/src/index.css` containing theme color variables; only append new CSS below it if needed.",
-    "Frontend files listed as immutable by the platform must not be edited (compose UI using existing components instead).",
-    "Backend must remain a single-actor Motoko canister; do not introduce additional backend services."
+    "Do not change the modal structure, styling, or layout.",
+    "Do not change the right-side close (X) button position.",
+    "Do not modify calling components/flows (HomePage, CategoryPage, Search).",
+    "Preserve existing ESC key and overlay click close behavior (no regressions).",
+    "Limit code changes to the ProductDetailModal history/popstate close logic; avoid unrelated refactors."
   ],
   "nonGoals": [
-    "Do not add pagination or a \"load more\" flow for search results; the search endpoint must remain limited to 10 returned products.",
-    "Do not change the standalone product detail page route structure or convert it to prop-driven rendering.",
-    "Do not change search autocomplete behavior beyond what is required to pass full product objects to the modal."
+    "Adding new routes or changing the URL structure for product detail navigation.",
+    "Introducing new modal animations or UI changes.",
+    "Backend changes."
   ],
   "imageRequirements": {
     "required": [],

@@ -1,124 +1,34 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T18:21:11.553Z",
+  "generatedAt": "2026-02-06T00:15:05.733Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 7,
-    "implemented": 6,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the backend `searchProducts(criteria : ProductSearchCriteria)` in `backend/main.mo` to return at most 10 products in `ProductSearchResults.products`, while keeping `totalCount` as the total number of matches and preserving the existing featured-first + recency sorting behavior.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Refactor `frontend/src/components/ProductDetailModal.tsx` so it does not fetch product/category/store data internally (no `useProductDetail`, `useGetProduct`, `useGetAllCategories`, or `useGetStoreDetails`). The modal must render using a full `product` object passed via props and must not make any React Query calls that trigger network requests.",
+        "summary": "Update `frontend/src/components/ProductDetailModal.tsx` history management so the modal closes on a single click of the close button by properly coordinating `history.pushState`, `window.history.back()`, and the `popstate` listener using refs to avoid race conditions. Specifically: (a) when `open` becomes true, push a history state once and set a `historyPushedRef` flag; (b) implement a unified close handler guarded by `isClosingRef` that calls `window.history.back()` only when a modal history entry was pushed (otherwise calls `onClose()` directly) and does not clear `historyPushedRef` before triggering `back()`; (c) add a `popstate` listener that, while the modal is open, clears `historyPushedRef` and calls `onClose()` so browser back (and the close button’s `history.back()`) reliably closes the modal in one action.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/ProductDetailModal.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/ProductDetailModal.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Update all modal-opening UI flows to pass the complete `product` object (not just barcode) into `ProductDetailModal`, specifically from: (1) Home page product cards rendered from `useGetCategoriesWithProducts()`, (2) Home page search autocomplete click, (3) Home page search results grid (Enter key flow), and (4) Category page product cards rendered from `useGetCategoryProductsPaginated()`.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/components/SearchBar.tsx",
-          "frontend/src/pages/CategoryPage.tsx",
-          "frontend/src/components/home/CategoriesDisplay.tsx",
-          "frontend/src/components/home/CategorySection.tsx",
-          "frontend/src/components/home/ProductGrid.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/components/SearchBar.tsx",
-          "frontend/src/pages/CategoryPage.tsx",
-          "frontend/src/components/home/CategoriesDisplay.tsx",
-          "frontend/src/components/home/CategorySection.tsx",
-          "frontend/src/components/home/ProductGrid.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Adjust `frontend/src/components/home/ProductCard.tsx` (and any other impacted callers) so the selection callback can pass the full `product` object to parent components, enabling prop-driven modal opening without follow-up lookups.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/home/ProductCard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/home/ProductCard.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Keep the standalone product detail page behavior unchanged for direct URL access (e.g., `/product/$barcode` route). The standalone page should continue using the existing product/category/store fetching approach and should not rely on modal prop passing.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/ProductDetailPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/ProductDetailPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Update the search UI in `frontend/src/components/SearchBar.tsx` to reflect the backend’s 10-result maximum: show the displayed result count (≤ 10) as the main count label, render results in a responsive grid (5 per row on desktop, 2 per row on mobile), and when `totalCount > 10`, show the helper message exactly: \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\"",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/SearchBar.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/SearchBar.tsx"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Ensure WhatsApp and Share actions in the modal continue to work using only the passed-in product data: the share URL must be derived from `product.barcode`, and the WhatsApp link must use `formatWhatsAppApiNumber()` with a phone number sourced without modal-initiated API fetching (e.g., passed from parent or read from an already-cached store details value).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/ProductDetailView.tsx",
-          "frontend/src/components/SearchBar.tsx",
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/pages/CategoryPage.tsx",
-          "frontend/src/components/ProductDetailModal.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/SearchBar.tsx",
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/pages/CategoryPage.tsx",
           "frontend/src/components/ProductDetailModal.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/ProductDetailModal.tsx",
-    "frontend/src/components/SearchBar.tsx",
-    "frontend/src/components/home/CategoriesDisplay.tsx",
-    "frontend/src/components/home/CategorySection.tsx",
-    "frontend/src/components/home/ProductCard.tsx",
-    "frontend/src/components/home/ProductGrid.tsx",
-    "frontend/src/hooks/useProductDetail.ts",
-    "frontend/src/pages/CategoryPage.tsx",
-    "frontend/src/pages/HomePage.tsx",
-    "frontend/src/pages/ProductDetailPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

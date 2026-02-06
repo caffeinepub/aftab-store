@@ -13,6 +13,8 @@ interface ProductDetailModalProps {
 export default function ProductDetailModal({ product, open, onClose }: ProductDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const historyPushedRef = useRef(false);
+  const isClosingRef = useRef(false);
 
   const { data: categories = [] } = useGetAllCategories();
   const { data: storeDetails } = useGetStoreDetails();
@@ -23,19 +25,60 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
 
   const isStoreDetailsLoading = !storeDetails;
 
+  // Unified close handler
+  const handleClose = useRef(() => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+
+    if (historyPushedRef.current) {
+      // Use history.back() to trigger popstate event
+      window.history.back();
+    } else {
+      // Direct close if no history was pushed
+      onClose();
+    }
+
+    // Reset closing state after delay
+    setTimeout(() => {
+      isClosingRef.current = false;
+    }, 100);
+  }).current;
+
+  // Handle popstate events
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePopState = () => {
+      // Reset history flag and close modal
+      historyPushedRef.current = false;
+      onClose();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [open, onClose]);
+
+  // Push history state when modal opens
+  useEffect(() => {
+    if (open) {
+      window.history.pushState({ modalOpen: true }, '');
+      historyPushedRef.current = true;
+    }
+  }, [open]);
+
   // Handle ESC key
   useEffect(() => {
     if (!open) return;
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        handleClose();
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [open, onClose]);
+  }, [open, handleClose]);
 
   // Focus trap
   useEffect(() => {
@@ -74,6 +117,14 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
     }
   }, [open]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      historyPushedRef.current = false;
+      isClosingRef.current = false;
+    };
+  }, []);
+
   if (!open) return null;
 
   // Validate required product fields
@@ -82,7 +133,7 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
   return (
     <div
       className="product-detail-modal-overlay"
-      onClick={onClose}
+      onClick={handleClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
@@ -116,7 +167,7 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
               storeDetails={storeDetails}
               isStoreDetailsLoading={isStoreDetailsLoading}
               showCloseButton={true}
-              onClose={onClose}
+              onClose={handleClose}
             />
           )}
         </div>

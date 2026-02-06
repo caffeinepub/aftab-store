@@ -1,58 +1,20 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Optimize ProductDetailModal to be fully prop-driven (no internal API calls) when opened from home/category/search, while keeping standalone product page behavior for direct URL access; limit backend search results to 10 with corresponding frontend messaging/layout updates.",
+  "summary": "Fix ProductDetailModal double-click-to-close by correcting history.pushState/popstate handling so close button, overlay click, ESC, and browser back all close consistently.",
   "architectural_notes": [
-    "Do not remove/modify/overwrite the :root CSS custom properties block in index.css containing theme color variables; append new CSS styles only below this block without changes."
+    "ProductDetailModal should push a history state when opened and close via popstate; use refs (e.g., isClosingRef, historyPushedRef) to prevent race conditions and double-close/double-click behavior."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "ProductDetailModal currently requires double-click on close button due to history.back()/popstate conflict causing inconsistent close behavior."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-refactor-frontend-src-components-productdetailmodal-tsx-so-it-does-not-fetch-product-category-store-data-internally-no-useproductdetail-usegetproduct-usegetallcategories-or-usegetstoredetails-the-modal-must-render-using-a-full-product-object-passed-via-props-and-must-not-make-any-react-query-calls-that-trigger-network-requests",
-      "title": "Refactor `frontend/src/components/ProductDetailModal.tsx` so it does not fetch product/category/store data internally (no `useProductDetail`, `useGetProduct`, `useGetAllCategories`, or `useGetStoreDetails`). The modal must render using a full `product` object passed via props and must not make any React Query calls that trigger network requests.",
+      "id": "feature-update-frontend-src-components-productdetailmodal-tsx-history-management-so-the-modal-closes-on-a-single-click-of-the-close-button-by-properly-coordinating-history-pushstate-window-history-back-and-the-popstate-listener-using-refs-to-avoid-race-conditions-specifically-a-when-open-becomes-true-push-a-history-state-once-and-set-a-historypushedref-flag-b-implement-a-unified-close-handler-guarded-by-isclosingref-that-calls-window-history-back-only-when-a-modal-history-entry-was-pushed-otherwise-calls-onclose-directly-and-does-not-clear-historypushedref-before-triggering-back-c-add-a-popstate-listener-that-while-the-modal-is-open-clears-historypushedref-and-calls-onclose-so-browser-back-and-the-close-button-s-history-back-reliably-closes-the-modal-in-one-action",
+      "title": "Update `frontend/src/components/ProductDetailModal.tsx` history management so the modal closes on a single click of the close button by properly coordinating `history.pushState`, `window.history.back()`, and the `popstate` listener using refs to avoid race conditions. Specifically: (a) when `open` becomes true, push a history state once and set a `historyPushedRef` flag; (b) implement a unified close handler guarded by `isClosingRef` that calls `window.history.back()` only when a modal history entry was pushed (otherwise calls `onClose()` directly) and does not clear `historyPushedRef` before triggering `back()`; (c) add a `popstate` listener that, while the modal is open, clears `historyPushedRef` and calls `onClose()` so browser back (and the close button’s `history.back()`) reliably closes the modal in one action.",
       "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-all-modal-opening-ui-flows-to-pass-the-complete-product-object-not-just-barcode-into-productdetailmodal-specifically-from-1-home-page-product-cards-rendered-from-usegetcategorieswithproducts-2-home-page-search-autocomplete-click-3-home-page-search-results-grid-enter-key-flow-and-4-category-page-product-cards-rendered-from-usegetcategoryproductspaginated",
-      "title": "Update all modal-opening UI flows to pass the complete `product` object (not just barcode) into `ProductDetailModal`, specifically from: (1) Home page product cards rendered from `useGetCategoriesWithProducts()`, (2) Home page search autocomplete click, (3) Home page search results grid (Enter key flow), and (4) Category page product cards rendered from `useGetCategoryProductsPaginated()`.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-adjust-frontend-src-components-home-productcard-tsx-and-any-other-impacted-callers-so-the-selection-callback-can-pass-the-full-product-object-to-parent-components-enabling-prop-driven-modal-opening-without-follow-up-lookups",
-      "title": "Adjust `frontend/src/components/home/ProductCard.tsx` (and any other impacted callers) so the selection callback can pass the full `product` object to parent components, enabling prop-driven modal opening without follow-up lookups.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-keep-the-standalone-product-detail-page-behavior-unchanged-for-direct-url-access-e-g-product-barcode-route-the-standalone-page-should-continue-using-the-existing-product-category-store-fetching-approach-and-should-not-rely-on-modal-prop-passing",
-      "title": "Keep the standalone product detail page behavior unchanged for direct URL access (e.g., `/product/$barcode` route). The standalone page should continue using the existing product/category/store fetching approach and should not rely on modal prop passing.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-search-ui-in-frontend-src-components-searchbar-tsx-to-reflect-the-backend-s-10-result-maximum-show-the-displayed-result-count-10-as-the-main-count-label-render-results-in-a-responsive-grid-5-per-row-on-desktop-2-per-row-on-mobile-and-when-totalcount-10-show-the-helper-message-exactly-mostrando-los-10-primeros-resultados-refina-tu-b-squeda-para-m-s",
-      "title": "Update the search UI in `frontend/src/components/SearchBar.tsx` to reflect the backend’s 10-result maximum: show the displayed result count (≤ 10) as the main count label, render results in a responsive grid (5 per row on desktop, 2 per row on mobile), and when `totalCount > 10`, show the helper message exactly: \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\"",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-whatsapp-and-share-actions-in-the-modal-continue-to-work-using-only-the-passed-in-product-data-the-share-url-must-be-derived-from-product-barcode-and-the-whatsapp-link-must-use-formatwhatsappapinumber-with-a-phone-number-sourced-without-modal-initiated-api-fetching-e-g-passed-from-parent-or-read-from-an-already-cached-store-details-value",
-      "title": "Ensure WhatsApp and Share actions in the modal continue to work using only the passed-in product data: the share URL must be derived from `product.barcode`, and the WhatsApp link must use `formatWhatsAppApiNumber()` with a phone number sourced without modal-initiated API fetching (e.g., passed from parent or read from an already-cached store details value).",
-      "reqIds": [
-        "REQ-7"
+        "REQ-1"
       ],
       "version": 1
     }
@@ -60,27 +22,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Refactor ProductDetailModal to receive full product data via props and remove internal API calls (useGetProduct/useGetAllCategories/useGetStoreDetails); update all calling components (home cards, search autocomplete/results, category cards) to pass product object; keep standalone /product page unchanged.",
+      "summary": "Fix ProductDetailModal history management so close button closes on single click while preserving overlay/ESC/back-button behavior (pushState + popstate with refs to avoid race conditions).",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Limit backend searchProducts() to return max 10 records (keeping existing sorting), and update frontend search results UI to reflect limited results with count, grid layout, and 'showing first 10' message when applicable.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Update the backend `searchProducts(criteria : ProductSearchCriteria)` in `backend/main.mo` to return at most 10 products in `ProductSearchResults.products`, while keeping `totalCount` as the total number of matches and preserving the existing featured-first + recency sorting behavior.",
-      "reqIds": [
-        "REQ-1"
-      ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Optimize ProductDetailModal to be prop-driven and limit search results to 10",
+  "projectName": "Fix ProductDetailModal double-click close by correcting history/popstate handling",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

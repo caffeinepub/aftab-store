@@ -79,28 +79,35 @@ export default function ProductDetailView({
 
   return (
     <div className="w-full">
-      {/* Back/Close Button */}
-      {showBackButton && (
-        <Button
-          variant="ghost"
-          onClick={() => navigate({ to: '/' })}
-          className="mb-6 -ml-2"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Volver
-        </Button>
-      )}
+      {/* Header with Back/Close Button */}
+      <div className="flex items-center justify-between mb-6">
+        {/* Back Button (left side) */}
+        {showBackButton && (
+          <Button
+            variant="ghost"
+            onClick={() => navigate({ to: '/' })}
+            className="-ml-2"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver
+          </Button>
+        )}
 
-      {showCloseButton && onClose && (
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          className="mb-6 -ml-2"
-        >
-          <X className="w-4 h-4 mr-2" />
-          Cerrar
-        </Button>
-      )}
+        {/* Spacer when no back button */}
+        {!showBackButton && <div />}
+
+        {/* Close Button (right side) */}
+        {showCloseButton && onClose && (
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="-mr-2"
+            aria-label="Cerrar modal"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        )}
+      </div>
 
       {/* Product Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">

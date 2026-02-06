@@ -1,75 +1,32 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T18:21:11.549Z",
-  "summary": "REQ-4 appears implemented (ProductCard onSelect now passes full product). However, key requirements are missing or not verifiable from the diff: backend search limiting to 10 (REQ-1), modal being fully prop-driven with no query hooks (REQ-2), passing full product object for all modal-opening flows (REQ-3, partially), SearchBar UI updates for 10-result limit (REQ-6), and ensuring WhatsApp/Share work without modal-initiated fetching (REQ-7). The diff also adds an unrequested infinite-scroll/load-more behavior for category display.",
+  "generatedAt": "2026-02-06T00:15:05.730Z",
+  "summary": "ProductDetailModal history/popstate logic was updated with refs, a unified close handler, a popstate listener, and pushState on open. However, the pushState logic lacks an explicit ref-guard to prevent multiple pushes in scenarios like React 18 StrictMode double-invoked effects. Additional unrelated project summary/state files were modified.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Update backend searchProducts(criteria) to return at most 10 products in results.products while keeping totalCount as total matches and preserving featured-first + recency sorting.",
-      "reason": "backend/main.mo is truncated and the diff snippet does not show any changes to searchProducts() implementing a 10-item cap while preserving sorting and totalCount semantics.",
+      "requirement": "When `open` becomes true, push a history state once (no repeated pushes while it remains open) by guarding the push with a `historyPushedRef` flag to avoid race conditions/duplicate pushes.",
+      "reason": "The diff shows `pushState` is called whenever `open` is true in the effect, without checking `historyPushedRef.current` before pushing. This can allow repeated pushes in certain conditions (e.g., effect re-invocation) and does not match the explicitly requested ref-guarded 'push once' behavior.",
       "evidence": [
-        "backend/main.mo (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "Refactor ProductDetailModal so it does not fetch product/category/store data internally and makes no React Query calls; it must render from a passed-in full product prop.",
-      "reason": "ProductDetailModal still calls React Query hooks (useGetAllCategories, useGetStoreDetails), which can trigger network requests when opening the modal.",
-      "evidence": [
-        "frontend/src/components/ProductDetailModal.tsx"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Update all modal-opening flows to pass the complete product object into ProductDetailModal (home cards, search autocomplete click, search results grid Enter flow, category page cards).",
-      "reason": "HomePage and SearchBar show selectedProduct being stored as Product and passed to ProductDetailModal, but the diff does not provide enough evidence that the CategoryPage product-card flow is wired to pass Product objects via ProductCard onSelect (CategoryPage is truncated around rendering).",
-      "evidence": [
-        "frontend/src/pages/HomePage.tsx",
-        "frontend/src/components/SearchBar.tsx (truncated)",
-        "frontend/src/pages/CategoryPage.tsx (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "requirement": "Update SearchBar UI: show displayed result count (<=10) as main label, render full results in responsive grid (5 desktop, 2 mobile), and when totalCount > 10 show helper message exactly: \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\"",
-      "reason": "SearchBar diff is truncated and does not show the count label logic, the 2/5-column grid implementation, or the exact helper message rendering. The only visible logic is slicing autocomplete to 10 and using searchResults?.products for full results.",
-      "evidence": [
-        "frontend/src/components/SearchBar.tsx (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "requirement": "Ensure WhatsApp and Share actions in the modal work using only passed-in product data (share URL from product.barcode; WhatsApp uses formatWhatsAppApiNumber with phone number not fetched by modal).",
-      "reason": "ProductDetailModal still fetches storeDetails via useGetStoreDetails, which violates the requirement to avoid modal-initiated fetching for WhatsApp; also the diff does not show how share/WhatsApp URLs are built in ProductDetailView for the modal context.",
-      "evidence": [
-        "frontend/src/components/ProductDetailModal.tsx"
+        "frontend/src/components/ProductDetailModal.tsx (truncated): `useEffect(() => { if (open) { window.history.pushState({ modalOpen: true }, ''); historyPushedRef.current = true; } }, [open]);`"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Infinite scroll / load-more behavior for the home categories display (IntersectionObserver with 'Cargando más categorías...' loader and progressively increasing displayed categories).",
-      "reason": "The BuildRequest focuses on making ProductDetailModal prop-driven and limiting search results to 10; it does not request adding an infinite-scroll/load-more mechanism for categories on the home page.",
+      "description": "Modified project-level tracking/state files that are not part of the requested ProductDetailModal history/popstate fix.",
+      "reason": "BuildRequest constrained changes to ProductDetailModal history/popstate close logic and to avoid unrelated refactors; these file modifications are not requested by REQ-1.",
       "evidence": [
-        "frontend/src/components/home/CategoriesDisplay.tsx"
+        "frontend-file-summaries.txt",
+        "project_state.json"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.68,
   "changed_files": [
-    "backend/main.mo",
     "frontend-file-summaries.txt",
     "frontend/src/components/ProductDetailModal.tsx",
-    "frontend/src/components/SearchBar.tsx",
-    "frontend/src/components/home/CategoriesDisplay.tsx",
-    "frontend/src/components/home/CategorySection.tsx",
-    "frontend/src/components/home/ProductCard.tsx",
-    "frontend/src/components/home/ProductGrid.tsx",
-    "frontend/src/hooks/useProductDetail.ts",
-    "frontend/src/pages/CategoryPage.tsx",
-    "frontend/src/pages/HomePage.tsx",
-    "frontend/src/pages/ProductDetailPage.tsx",
     "project_state.json"
   ]
 }

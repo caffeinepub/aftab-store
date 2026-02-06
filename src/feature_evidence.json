@@ -2,8 +2,8 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-refactor-frontend-src-components-productdetailmodal-tsx-so-it-does-not-fetch-product-category-store-data-internally-no-useproductdetail-usegetproduct-usegetallcategories-or-usegetstoredetails-the-modal-must-render-using-a-full-product-object-passed-via-props-and-must-not-make-any-react-query-calls-that-trigger-network-requests",
-      "featureTitle": "Refactor `frontend/src/components/ProductDetailModal.tsx` so it does not fetch product/category/store data internally (no `useProductDetail`, `useGetProduct`, `useGetAllCategories`, or `useGetStoreDetails`). The modal must render using a full `product` object passed via props and must not make any React Query calls that trigger network requests.",
+      "featureId": "feature-update-frontend-src-components-productdetailmodal-tsx-history-management-so-the-modal-closes-on-a-single-click-of-the-close-button-by-properly-coordinating-history-pushstate-window-history-back-and-the-popstate-listener-using-refs-to-avoid-race-conditions-specifically-a-when-open-becomes-true-push-a-history-state-once-and-set-a-historypushedref-flag-b-implement-a-unified-close-handler-guarded-by-isclosingref-that-calls-window-history-back-only-when-a-modal-history-entry-was-pushed-otherwise-calls-onclose-directly-and-does-not-clear-historypushedref-before-triggering-back-c-add-a-popstate-listener-that-while-the-modal-is-open-clears-historypushedref-and-calls-onclose-so-browser-back-and-the-close-button-s-history-back-reliably-closes-the-modal-in-one-action",
+      "featureTitle": "Update `frontend/src/components/ProductDetailModal.tsx` history management so the modal closes on a single click of the close button by properly coordinating `history.pushState`, `window.history.back()`, and the `popstate` listener using refs to avoid race conditions. Specifically: (a) when `open` becomes true, push a history state once and set a `historyPushedRef` flag; (b) implement a unified close handler guarded by `isClosingRef` that calls `window.history.back()` only when a modal history entry was pushed (otherwise calls `onClose()` directly) and does not clear `historyPushedRef` before triggering `back()`; (c) add a `popstate` listener that, while the modal is open, clears `historyPushedRef` and calls `onClose()` so browser back (and the close button’s `history.back()`) reliably closes the modal in one action.",
       "files": [
         "frontend/src/components/ProductDetailModal.tsx"
       ],
@@ -17,115 +17,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-all-modal-opening-ui-flows-to-pass-the-complete-product-object-not-just-barcode-into-productdetailmodal-specifically-from-1-home-page-product-cards-rendered-from-usegetcategorieswithproducts-2-home-page-search-autocomplete-click-3-home-page-search-results-grid-enter-key-flow-and-4-category-page-product-cards-rendered-from-usegetcategoryproductspaginated",
-      "featureTitle": "Update all modal-opening UI flows to pass the complete `product` object (not just barcode) into `ProductDetailModal`, specifically from: (1) Home page product cards rendered from `useGetCategoriesWithProducts()`, (2) Home page search autocomplete click, (3) Home page search results grid (Enter key flow), and (4) Category page product cards rendered from `useGetCategoryProductsPaginated()`.",
-      "files": [
-        "frontend/src/components/SearchBar.tsx",
-        "frontend/src/components/home/CategoriesDisplay.tsx",
-        "frontend/src/components/home/CategorySection.tsx",
-        "frontend/src/components/home/ProductGrid.tsx",
-        "frontend/src/pages/CategoryPage.tsx",
-        "frontend/src/pages/HomePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-adjust-frontend-src-components-home-productcard-tsx-and-any-other-impacted-callers-so-the-selection-callback-can-pass-the-full-product-object-to-parent-components-enabling-prop-driven-modal-opening-without-follow-up-lookups",
-      "featureTitle": "Adjust `frontend/src/components/home/ProductCard.tsx` (and any other impacted callers) so the selection callback can pass the full `product` object to parent components, enabling prop-driven modal opening without follow-up lookups.",
-      "files": [
-        "frontend/src/components/home/ProductCard.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-keep-the-standalone-product-detail-page-behavior-unchanged-for-direct-url-access-e-g-product-barcode-route-the-standalone-page-should-continue-using-the-existing-product-category-store-fetching-approach-and-should-not-rely-on-modal-prop-passing",
-      "featureTitle": "Keep the standalone product detail page behavior unchanged for direct URL access (e.g., `/product/$barcode` route). The standalone page should continue using the existing product/category/store fetching approach and should not rely on modal prop passing.",
-      "files": [
-        "frontend/src/pages/ProductDetailPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-search-ui-in-frontend-src-components-searchbar-tsx-to-reflect-the-backend-s-10-result-maximum-show-the-displayed-result-count-10-as-the-main-count-label-render-results-in-a-responsive-grid-5-per-row-on-desktop-2-per-row-on-mobile-and-when-totalcount-10-show-the-helper-message-exactly-mostrando-los-10-primeros-resultados-refina-tu-b-squeda-para-m-s",
-      "featureTitle": "Update the search UI in `frontend/src/components/SearchBar.tsx` to reflect the backend’s 10-result maximum: show the displayed result count (≤ 10) as the main count label, render results in a responsive grid (5 per row on desktop, 2 per row on mobile), and when `totalCount > 10`, show the helper message exactly: \"Mostrando los 10 primeros resultados. Refina tu búsqueda para más.\"",
-      "files": [
-        "frontend/src/components/SearchBar.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-whatsapp-and-share-actions-in-the-modal-continue-to-work-using-only-the-passed-in-product-data-the-share-url-must-be-derived-from-product-barcode-and-the-whatsapp-link-must-use-formatwhatsappapinumber-with-a-phone-number-sourced-without-modal-initiated-api-fetching-e-g-passed-from-parent-or-read-from-an-already-cached-store-details-value",
-      "featureTitle": "Ensure WhatsApp and Share actions in the modal continue to work using only the passed-in product data: the share URL must be derived from `product.barcode`, and the WhatsApp link must use `formatWhatsAppApiNumber()` with a phone number sourced without modal-initiated API fetching (e.g., passed from parent or read from an already-cached store details value).",
-      "files": [
-        "frontend/src/components/ProductDetailModal.tsx",
-        "frontend/src/components/SearchBar.tsx",
-        "frontend/src/pages/CategoryPage.tsx",
-        "frontend/src/pages/HomePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
+        "REQ-1"
       ],
       "confidence": "high"
     }
