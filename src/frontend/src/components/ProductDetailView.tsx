@@ -6,17 +6,17 @@ import { Copy, Share2, ArrowLeft, Check, X } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
 import { formatWhatsAppApiNumber } from '../utils/phoneFormatter';
 import type { Product, StoreDetails } from '../backend';
-import type { CategoryDetails } from '../types/productDetail';
 
 const DEFAULT_IMAGE = 'https://i.imgur.com/epm4DO1.jpeg';
 
 interface ProductDetailViewProps {
   barcode: string;
   product: Product;
-  categoryName?: string;
-  categoryDetails?: CategoryDetails;
+  categoryDetails?: {
+    id: bigint;
+    name: string;
+  };
   storeDetails?: StoreDetails;
-  isStoreDetailsLoading: boolean;
   showBackButton?: boolean;
   showCloseButton?: boolean;
   onClose?: () => void;
@@ -25,10 +25,8 @@ interface ProductDetailViewProps {
 export default function ProductDetailView({
   barcode,
   product,
-  categoryName,
   categoryDetails,
   storeDetails,
-  isStoreDetailsLoading,
   showBackButton = false,
   showCloseButton = false,
   onClose,
@@ -80,9 +78,7 @@ export default function ProductDetailView({
     window.open(`${whatsappUrl}?text=${message}`, '_blank');
   };
 
-  // Determine which category display to use
-  const displayCategoryName = categoryDetails?.name || categoryName;
-  const displayCategoryId = categoryDetails?.id;
+  const isStoreDetailsLoading = !storeDetails;
 
   return (
     <div className="w-full">
@@ -153,14 +149,14 @@ export default function ProductDetailView({
           )}
 
           {/* Category */}
-          {displayCategoryName && displayCategoryId && (
+          {categoryDetails && (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Categoría:</span>
               <button
-                onClick={() => navigate({ to: '/category/$categoryId', params: { categoryId: displayCategoryId } })}
+                onClick={() => navigate({ to: '/category', search: { id: categoryDetails.id.toString() } })}
                 className="text-primary hover:underline font-medium"
               >
-                {displayCategoryName}
+                {categoryDetails.name}
               </button>
             </div>
           )}

@@ -2,11 +2,10 @@ import React from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import ProductGrid from './ProductGrid';
 import type { CategoryWithProducts, Product } from '../../backend';
-import type { ProductSelection } from '../../types/productDetail';
 
 interface CategorySectionProps {
   categoryWithProducts: CategoryWithProducts;
-  onProductSelect?: (selection: ProductSelection) => void;
+  onProductSelect?: (product: Product, categoryId: bigint) => void;
 }
 
 export default function CategorySection({ categoryWithProducts, onProductSelect }: CategorySectionProps) {
@@ -14,19 +13,12 @@ export default function CategorySection({ categoryWithProducts, onProductSelect 
   const { category, products, productCount } = categoryWithProducts;
 
   const handleViewAll = () => {
-    navigate({ to: '/category/$categoryId', params: { categoryId: category.id.toString() } });
+    navigate({ to: '/category', search: { id: category.id.toString() } });
   };
 
   const handleProductSelect = (product: Product) => {
     if (onProductSelect) {
-      const selection: ProductSelection = {
-        product,
-        categoryDetails: {
-          id: category.id.toString(),
-          name: category.name,
-        },
-      };
-      onProductSelect(selection);
+      onProductSelect(product, category.id);
     }
   };
 

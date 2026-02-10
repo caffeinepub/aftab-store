@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useSearch, useNavigate } from '@tanstack/react-router';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useSearch, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useGetCategoryById, useGetCategoryProductsPaginated, useGetStoreDetails } from '../hooks/useQueries';
@@ -8,23 +8,19 @@ import { Button } from '../components/ui/button';
 import ProductCard from '../components/home/ProductCard';
 import ProductDetailModal from '../components/ProductDetailModal';
 import type { Product } from '../backend';
-import type { ProductSelection } from '../types/productDetail';
 
 const PRODUCTS_PER_PAGE = 15;
 const SCROLL_THRESHOLD = 500;
 const COOLDOWN_MS = 300;
 
 export default function CategoryPage() {
-  // Support both path param and search param for backward compatibility
-  const params = useParams({ from: '/public-layout/category/$categoryId' });
   const search = useSearch({ from: '/public-layout/category' });
-  const categoryId = params?.categoryId || search?.id || '';
-  
+  const categoryId = search.id || '';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const actorState = useActor();
 
-  const [selectedProductData, setSelectedProductData] = useState<ProductSelection | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [offset, setOffset] = useState(0);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
@@ -42,7 +38,7 @@ export default function CategoryPage() {
     }
   }, [actorState.actor, stableActor]);
 
-  // Fetch category details
+  // Fetch category details and store details
   const { data: category } = useGetCategoryById(categoryId);
   const { data: storeDetails } = useGetStoreDetails();
 
@@ -158,23 +154,25 @@ export default function CategoryPage() {
   }, [hasMore, isInitialLoading, isLoadingMore, loadMoreProducts]);
 
   const handleProductSelect = (product: Product) => {
-    const selection: ProductSelection = {
-      product,
-      categoryDetails: {
-        id: categoryId,
-        name: category?.name,
-      },
-    };
-    setSelectedProductData(selection);
+    setSelectedProduct(product);
   };
 
   const handleCloseModal = () => {
-    setSelectedProductData(null);
+    setSelectedProduct(null);
   };
 
   const getProductCountText = (count: number) => {
     return count === 1 ? '1 producto' : `${count} productos`;
   };
+
+  // Category details for modal
+  const categoryDetails = useMemo(() => {
+    if (!category) return null;
+    return {
+      id: category.id,
+      name: category.name
+    };
+  }, [category]);
 
   if (isInitialLoading) {
     return (
@@ -263,11 +261,12 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {selectedProductData && storeDetails && (
+      {selectedProduct && storeDetails && categoryDetails && (
         <ProductDetailModal
-          product={selectedProductData.product}
+          product={selectedProduct}
           storeDetails={storeDetails}
-          categoryDetails={selectedProductData.categoryDetails}
+          categoryDetails={categoryDetails}
+          open={!!selectedProduct}
           onClose={handleCloseModal}
         />
       )}

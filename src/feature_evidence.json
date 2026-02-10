@@ -2,11 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-refactor-productdetailmodal-to-make-zero-internal-api-calls-by-removing-usegetallcategories-and-usegetstoredetails-usage-and-instead-require-all-needed-data-via-props-product-storedetails-categorydetails-id-name-and-onclose-remove-any-in-modal-category-lookup-mapping-logic",
-      "featureTitle": "Refactor `ProductDetailModal` to make zero internal API calls by removing `useGetAllCategories()` and `useGetStoreDetails()` usage, and instead require all needed data via props: `product`, `storeDetails`, `categoryDetails {id, name}`, and `onClose`. Remove any in-modal category lookup/mapping logic.",
+      "featureId": "feature-refactor-productdetailmodal-to-make-zero-react-query-or-any-other-api-calls-internally-by-removing-usegetallcategories-and-usegetstoredetails-usage-and-instead-requiring-all-needed-data-via-props-product-storedetails-categorydetails-id-name-and-onclose",
+      "featureTitle": "Refactor `ProductDetailModal` to make zero React Query (or any other) API calls internally by removing `useGetAllCategories()` and `useGetStoreDetails()` usage and instead requiring all needed data via props: `product`, `storeDetails`, `categoryDetails {id, name}`, and `onClose`.",
       "files": [
-        "frontend/src/components/ProductDetailModal.tsx",
-        "frontend/src/types/productDetail.ts"
+        "frontend/src/components/ProductDetailModal.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,10 +22,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-modal-rendering-flow-on-the-home-page-so-homepage-passes-storedetails-loaded-once-on-the-page-and-categorydetails-id-name-from-the-homepage-category-context-to-productdetailmodal-when-a-product-is-selected-from-the-homepage-category-sections",
-      "featureTitle": "Update the modal rendering flow on the Home page so `HomePage` passes `storeDetails` (loaded once on the page) and `categoryDetails` (id + name from the homepage category context) to `ProductDetailModal` when a product is selected from the homepage category sections.",
+      "featureId": "feature-update-productdetailview-and-modal-rendering-so-category-display-and-navigation-use-categorydetails-passed-from-the-parent-category-name-for-display-category-id-for-navigation-ensure-the-category-navigation-uses-the-query-parameter-format-category-id-id-via-tanstack-router-navigation-and-is-properly-encoded",
+      "featureTitle": "Update `ProductDetailView` and modal rendering so category display and navigation use `categoryDetails` passed from the parent (category name for display + category id for navigation). Ensure the category navigation uses the query-parameter format `/category?id=<id>` via TanStack Router navigation and is properly encoded.",
       "files": [
-        "frontend/src/pages/HomePage.tsx"
+        "frontend/src/components/ProductDetailModal.tsx",
+        "frontend/src/components/ProductDetailView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -43,12 +43,13 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-homepage-category-browsing-components-so-the-product-selection-callback-includes-enough-category-context-to-build-categorydetails-id-and-name-without-any-additional-api-calls-when-opening-the-modal-from-category-product-grids",
-      "featureTitle": "Update homepage category browsing components so the product selection callback includes enough category context to build `categoryDetails` (id and name) without any additional API calls when opening the modal from category product grids.",
+      "featureId": "feature-update-home-page-product-detail-modal-opening-flow-to-pass-storedetails-loaded-once-on-initial-home-load-and-categorydetails-derived-from-existing-home-category-data-into-productdetailmodal-whenever-a-product-is-selected-from-category-sections",
+      "featureTitle": "Update Home page product-detail modal opening flow to pass `storeDetails` (loaded once on initial Home load) and `categoryDetails` (derived from existing Home category data) into `ProductDetailModal` whenever a product is selected from category sections.",
       "files": [
         "frontend/src/components/home/CategoriesDisplay.tsx",
         "frontend/src/components/home/CategorySection.tsx",
-        "frontend/src/types/productDetail.ts"
+        "frontend/src/components/home/ProductCard.tsx",
+        "frontend/src/pages/HomePage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -65,11 +66,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-refactor-searchbar-so-it-does-not-fetch-store-details-itself-for-modal-use-instead-it-receives-storedetails-from-the-home-page-and-passes-storedetails-product-and-categorydetails-into-productdetailmodal-for-both-autocomplete-click-and-full-results-click-flows-ensure-the-autocomplete-dropdown-closes-when-an-item-is-selected-and-the-modal-opens-for-that-specific-product-without-triggering-any-additional-data-fetches-in-the-modal",
-      "featureTitle": "Refactor `SearchBar` so it does not fetch store details itself for modal use; instead it receives `storeDetails` from the Home page and passes `storeDetails`, `product`, and `categoryDetails` into `ProductDetailModal` for both autocomplete-click and full-results-click flows. Ensure the autocomplete dropdown closes when an item is selected and the modal opens for that specific product without triggering any additional data fetches in the modal.",
+      "featureId": "feature-update-search-ui-flows-so-selecting-a-product-from-either-a-autocomplete-dropdown-or-b-full-results-grid-opens-productdetailmodal-using-already-available-parent-provided-storedetails-and-category-details-derived-from-the-selected-search-result-product-data-remove-usegetstoredetails-usage-from-searchbar-to-avoid-duplicate-fetching",
+      "featureTitle": "Update Search UI flows so selecting a product from either (a) autocomplete dropdown or (b) full results grid opens `ProductDetailModal` using already-available parent-provided `storeDetails` and category details derived from the selected search result product data; remove `useGetStoreDetails()` usage from `SearchBar` to avoid duplicate fetching.",
       "files": [
         "frontend/src/components/SearchBar.tsx",
-        "frontend/src/types/productDetail.ts"
+        "frontend/src/pages/HomePage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -86,8 +87,8 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-categorypage-so-storedetails-is-loaded-once-on-the-category-page-and-passed-into-productdetailmodal-along-with-categorydetails-sourced-from-the-current-category-page-context-current-category-id-and-name-the-modal-must-not-perform-any-data-fetching",
-      "featureTitle": "Update `CategoryPage` so `storeDetails` is loaded once on the category page and passed into `ProductDetailModal` along with `categoryDetails` sourced from the current category page context (current category id and name). The modal must not perform any data fetching.",
+      "featureId": "feature-update-category-page-product-detail-modal-opening-flow-to-pass-storedetails-loaded-once-on-category-page-load-and-categorydetails-from-the-current-category-context-into-productdetailmodal-when-a-product-card-is-selected",
+      "featureTitle": "Update Category page product-detail modal opening flow to pass `storeDetails` (loaded once on Category page load) and `categoryDetails` from the current category context into `ProductDetailModal` when a product card is selected.",
       "files": [
         "frontend/src/pages/CategoryPage.tsx"
       ],
@@ -106,12 +107,13 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-product-detail-ui-displayed-inside-the-modal-to-use-categorydetails-for-category-display-and-navigation-and-update-the-category-navigation-link-to-use-path-parameter-format-category-categorydetails-id-remove-any-reliance-on-categoryname-derived-from-fetched-categories-for-the-modal-path",
-      "featureTitle": "Update the product detail UI displayed inside the modal to use `categoryDetails` for category display and navigation, and update the category navigation link to use path-parameter format `/category/${categoryDetails.id}`. Remove any reliance on `categoryName` derived from fetched categories for the modal path.",
+      "featureId": "feature-enforce-modal-only-internal-product-detail-navigation-ensure-public-in-app-interactions-home-category-sections-search-results-autocomplete-category-page-product-grid-do-not-navigate-to-product-barcode-and-instead-open-productdetailmodal-keep-product-barcode-accessible-only-via-direct-url-entry-bookmarks-external-links",
+      "featureTitle": "Enforce 'modal-only' internal product detail navigation: ensure public in-app interactions (Home category sections, Search results/autocomplete, Category page product grid) do not navigate to `/product/$barcode` and instead open `ProductDetailModal`. Keep `/product/$barcode` accessible only via direct URL entry/bookmarks/external links.",
       "files": [
-        "frontend/src/components/ProductDetailModal.tsx",
-        "frontend/src/components/ProductDetailView.tsx",
-        "frontend/src/types/productDetail.ts"
+        "frontend/src/components/SearchBar.tsx",
+        "frontend/src/components/home/ProductCard.tsx",
+        "frontend/src/pages/CategoryPage.tsx",
+        "frontend/src/pages/HomePage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -128,11 +130,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-support-in-the-public-router-for-category-navigation-by-path-parameter-category-categoryid-while-keeping-the-existing-standalone-product-page-route-product-barcode-unchanged-ensure-the-modal-category-link-works-with-the-new-path-parameter-format-without-breaking-existing-category-navigation-patterns-elsewhere-in-the-app",
-      "featureTitle": "Add support in the public router for category navigation by path parameter `/category/$categoryId` while keeping the existing standalone product page route `/product/$barcode` unchanged. Ensure the modal category link works with the new path parameter format without breaking existing category navigation patterns elsewhere in the app.",
+      "featureId": "feature-preserve-existing-layout-styling-constraints-keep-the-home-page-search-box-full-width-of-the-1200px-container-and-do-not-change-the-root-css-custom-properties-block-in-frontend-src-index-css-append-only-changes-below-the-block-if-any-css-changes-are-needed",
+      "featureTitle": "Preserve existing layout/styling constraints: keep the Home page search box full width of the 1200px container, and do not change the `:root` CSS custom properties block in `frontend/src/index.css` (append-only changes below the block if any CSS changes are needed).",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/pages/CategoryPage.tsx"
+        "frontend/src/components/SearchBar.tsx",
+        "frontend/src/pages/HomePage.tsx"
       ],
       "components": [
         "authorization@4.0.0",

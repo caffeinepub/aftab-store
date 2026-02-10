@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent } from '../ui/card';
 import StockBadge from './StockBadge';
 import { Star } from 'lucide-react';
@@ -13,7 +12,6 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onSelect }: ProductCardProps) {
-  const navigate = useNavigate();
   const [imageSrc, setImageSrc] = useState<string>(DEFAULT_IMAGE);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,8 +40,6 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
   const handleClick = () => {
     if (onSelect) {
       onSelect(product);
-    } else {
-      navigate({ to: '/product/$barcode', params: { barcode: product.barcode } });
     }
   };
 

@@ -1,15 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Refactor `ProductDetailModal` to be fully data-driven (no internal fetching) by passing product, store, and category context via props, while preserving all existing modal behaviors and enabling category navigation via `/category/{id}`.
+**Goal:** Refactor product details modal flows so `ProductDetailModal` performs zero internal data fetching and instead receives all required product, store, and category data via props, while preserving existing UI behavior.
 
 **Planned changes:**
-- Update `frontend/src/components/ProductDetailModal.tsx` to remove all internal React Query/API hooks (`useGetAllCategories`, `useGetStoreDetails`) and require props: `product`, `storeDetails`, `categoryDetails { id, name }`, and `onClose`, with no in-modal category lookup/mapping.
-- Update `HomePage` modal flow to load `storeDetails` once on the page, derive `categoryDetails` from already-loaded homepage category context, and pass `product + storeDetails + categoryDetails` into `ProductDetailModal`.
-- Update homepage category browsing components so product selection callbacks include `{ categoryDetails: { id, name } }` derived from existing category-with-products data, enforced via TypeScript types, without adding new fetches.
-- Refactor `SearchBar` to stop fetching store details; instead accept `storeDetails` via props from `HomePage` and open `ProductDetailModal` for both autocomplete and full-results clicks while closing the autocomplete dropdown on selection; derive `categoryDetails` from search result data when available and gracefully omit category display/link when missing (no fetching).
-- Update `CategoryPage` to load `storeDetails` once on the page and pass it plus current page `categoryDetails` into `ProductDetailModal` when opening from category product cards.
-- Update modal category UI to use `categoryDetails` for display/navigation and link to `/category/${categoryDetails.id}`.
-- Add router support for category navigation via `/category/$categoryId` while keeping `/product/$barcode` unchanged, and preserve/redirect any prior category navigation format without user-visible errors.
+- Update `ProductDetailModal` to remove all internal React Query/API calls and require `product`, `storeDetails`, `categoryDetails { id, name }`, and `onClose` via props (no category lookup/mapping inside the modal).
+- Update product detail view/modal rendering to display category name from `categoryDetails.name` and navigate to category using encoded query-parameter format `/category?id=<id>` via TanStack Router.
+- Update Home page modal-opening flow to load `storeDetails` once on initial Home load and pass it to the modal; pass `categoryDetails` derived from existing Home category data when selecting products from category sections.
+- Update Search flows (autocomplete + full results) to open the modal using already-available `storeDetails` from the parent and `categoryDetails` derived from selected product data; remove `useGetStoreDetails()` usage from `SearchBar`.
+- Update Category page modal-opening flow to load `storeDetails` once on Category page load and pass it along with current-page `categoryDetails` into the modal.
+- Enforce modal-only internal navigation: product interactions on Home, Search, and Category pages open `ProductDetailModal` instead of navigating to `/product/$barcode` (standalone product page remains accessible via direct URL).
+- Preserve existing layout/styling constraints (Home search box remains full width in 1200px container; no modifications to the existing `:root` CSS variables block in `frontend/src/index.css`).
 
-**User-visible outcome:** Opening a product detail modal from home categories, search, or category pages is instant and does not trigger any modal-owned network requests; the modal still behaves the same (close interactions, focus/scroll/back handling) and its category link navigates correctly to `/category/{id}`.
+**User-visible outcome:** Opening product details from Home, Search, or Category pages consistently opens a modal without triggering extra network requests from within the modal, while category display/linking and existing product-detail actions continue to work as before.

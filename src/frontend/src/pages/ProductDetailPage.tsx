@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../components/ui/button';
@@ -18,11 +18,16 @@ export default function ProductDetailPage() {
   const { data: categories = [] } = useGetAllCategories();
   const { data: storeDetails } = useGetStoreDetails();
 
-  const categoryName = categories.find(
-    (cat) => product && cat.id === product.categoryId
-  )?.name;
-
-  const isStoreDetailsLoading = !storeDetails;
+  // Create category details object for ProductDetailView
+  const categoryDetails = useMemo(() => {
+    if (!product) return undefined;
+    const category = categories.find((cat) => cat.id === product.categoryId);
+    if (!category) return undefined;
+    return {
+      id: category.id,
+      name: category.name
+    };
+  }, [product, categories]);
 
   // Scroll to top on mount and barcode changes
   useEffect(() => {
@@ -132,9 +137,8 @@ export default function ProductDetailPage() {
       <ProductDetailView
         barcode={barcode}
         product={product}
-        categoryName={categoryName}
+        categoryDetails={categoryDetails}
         storeDetails={storeDetails}
-        isStoreDetailsLoading={isStoreDetailsLoading}
         showBackButton={true}
       />
     </div>

@@ -1,19 +1,23 @@
 import React, { useEffect, useRef } from 'react';
 import ProductDetailView from './ProductDetailView';
 import type { Product, StoreDetails } from '../backend';
-import type { CategoryDetails } from '../types/productDetail';
 
 interface ProductDetailModalProps {
   product: Product;
   storeDetails: StoreDetails;
-  categoryDetails: CategoryDetails;
+  categoryDetails: {
+    id: bigint;
+    name: string;
+  };
+  open: boolean;
   onClose: () => void;
 }
 
 export default function ProductDetailModal({ 
   product, 
-  storeDetails, 
-  categoryDetails, 
+  storeDetails,
+  categoryDetails,
+  open, 
   onClose 
 }: ProductDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -42,6 +46,8 @@ export default function ProductDetailModal({
 
   // Handle popstate events
   useEffect(() => {
+    if (!open) return;
+
     const handlePopState = () => {
       // Reset history flag and close modal
       historyPushedRef.current = false;
@@ -50,16 +56,20 @@ export default function ProductDetailModal({
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [onClose]);
+  }, [open, onClose]);
 
   // Push history state when modal opens
   useEffect(() => {
-    window.history.pushState({ modalOpen: true }, '');
-    historyPushedRef.current = true;
-  }, []);
+    if (open) {
+      window.history.pushState({ modalOpen: true }, '');
+      historyPushedRef.current = true;
+    }
+  }, [open]);
 
   // Handle ESC key
   useEffect(() => {
+    if (!open) return;
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();
@@ -68,10 +78,12 @@ export default function ProductDetailModal({
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [handleClose]);
+  }, [open, handleClose]);
 
   // Focus trap
   useEffect(() => {
+    if (!open) return;
+
     // Store previous focus
     previousFocusRef.current = document.activeElement as HTMLElement;
 
@@ -86,22 +98,24 @@ export default function ProductDetailModal({
         previousFocusRef.current.focus();
       }
     };
-  }, []);
+  }, [open]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
+    if (open) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
 
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, scrollY);
-    };
-  }, []);
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [open]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -110,6 +124,8 @@ export default function ProductDetailModal({
       isClosingRef.current = false;
     };
   }, []);
+
+  if (!open) return null;
 
   // Validate required product fields
   const hasRequiredFields = product && product.barcode && product.name && product.categoryId !== undefined;
@@ -149,7 +165,6 @@ export default function ProductDetailModal({
               product={product}
               categoryDetails={categoryDetails}
               storeDetails={storeDetails}
-              isStoreDetailsLoading={false}
               showCloseButton={true}
               onClose={handleClose}
             />
