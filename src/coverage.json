@@ -1,24 +1,106 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T00:15:05.733Z",
+  "generatedAt": "2026-02-10T20:56:39.183Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 7,
+    "implemented": 7,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update `frontend/src/components/ProductDetailModal.tsx` history management so the modal closes on a single click of the close button by properly coordinating `history.pushState`, `window.history.back()`, and the `popstate` listener using refs to avoid race conditions. Specifically: (a) when `open` becomes true, push a history state once and set a `historyPushedRef` flag; (b) implement a unified close handler guarded by `isClosingRef` that calls `window.history.back()` only when a modal history entry was pushed (otherwise calls `onClose()` directly) and does not clear `historyPushedRef` before triggering `back()`; (c) add a `popstate` listener that, while the modal is open, clears `historyPushedRef` and calls `onClose()` so browser back (and the close button’s `history.back()`) reliably closes the modal in one action.",
+        "summary": "Refactor `ProductDetailModal` to make zero internal API calls by removing `useGetAllCategories()` and `useGetStoreDetails()` usage, and instead require all needed data via props: `product`, `storeDetails`, `categoryDetails {id, name}`, and `onClose`. Remove any in-modal category lookup/mapping logic.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/ProductDetailModal.tsx"
+          "frontend/src/components/ProductDetailModal.tsx",
+          "frontend/src/types/productDetail.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/ProductDetailModal.tsx"
+          "frontend/src/components/ProductDetailModal.tsx",
+          "frontend/src/types/productDetail.ts"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Update the modal rendering flow on the Home page so `HomePage` passes `storeDetails` (loaded once on the page) and `categoryDetails` (id + name from the homepage category context) to `ProductDetailModal` when a product is selected from the homepage category sections.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/HomePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/HomePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Update homepage category browsing components so the product selection callback includes enough category context to build `categoryDetails` (id and name) without any additional API calls when opening the modal from category product grids.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/home/CategoriesDisplay.tsx",
+          "frontend/src/components/home/CategorySection.tsx",
+          "frontend/src/components/home/ProductGrid.tsx",
+          "frontend/src/components/home/ProductCard.tsx",
+          "frontend/src/types/productDetail.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/home/CategoriesDisplay.tsx",
+          "frontend/src/components/home/CategorySection.tsx",
+          "frontend/src/types/productDetail.ts"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Refactor `SearchBar` so it does not fetch store details itself for modal use; instead it receives `storeDetails` from the Home page and passes `storeDetails`, `product`, and `categoryDetails` into `ProductDetailModal` for both autocomplete-click and full-results-click flows. Ensure the autocomplete dropdown closes when an item is selected and the modal opens for that specific product without triggering any additional data fetches in the modal.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/SearchBar.tsx",
+          "frontend/src/types/productDetail.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/SearchBar.tsx",
+          "frontend/src/types/productDetail.ts"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Update `CategoryPage` so `storeDetails` is loaded once on the category page and passed into `ProductDetailModal` along with `categoryDetails` sourced from the current category page context (current category id and name). The modal must not perform any data fetching.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/CategoryPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/CategoryPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Update the product detail UI displayed inside the modal to use `categoryDetails` for category display and navigation, and update the category navigation link to use path-parameter format `/category/${categoryDetails.id}`. Remove any reliance on `categoryName` derived from fetched categories for the modal path.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/ProductDetailView.tsx",
+          "frontend/src/components/ProductDetailModal.tsx",
+          "frontend/src/types/productDetail.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/ProductDetailView.tsx",
+          "frontend/src/components/ProductDetailModal.tsx",
+          "frontend/src/types/productDetail.ts"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Add support in the public router for category navigation by path parameter `/category/$categoryId` while keeping the existing standalone product page route `/product/$barcode` unchanged. Ensure the modal category link works with the new path parameter format without breaking existing category navigation patterns elsewhere in the app.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/pages/CategoryPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/pages/CategoryPage.tsx"
         ]
       }
     ]
@@ -28,7 +110,15 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
     "frontend/src/components/ProductDetailModal.tsx",
+    "frontend/src/components/ProductDetailView.tsx",
+    "frontend/src/components/SearchBar.tsx",
+    "frontend/src/components/home/CategoriesDisplay.tsx",
+    "frontend/src/components/home/CategorySection.tsx",
+    "frontend/src/pages/CategoryPage.tsx",
+    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/types/productDetail.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

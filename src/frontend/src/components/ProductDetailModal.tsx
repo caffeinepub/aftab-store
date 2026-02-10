@@ -1,29 +1,25 @@
 import React, { useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
-import { useGetAllCategories, useGetStoreDetails } from '../hooks/useQueries';
 import ProductDetailView from './ProductDetailView';
-import type { Product } from '../backend';
+import type { Product, StoreDetails } from '../backend';
+import type { CategoryDetails } from '../types/productDetail';
 
 interface ProductDetailModalProps {
   product: Product;
-  open: boolean;
+  storeDetails: StoreDetails;
+  categoryDetails: CategoryDetails;
   onClose: () => void;
 }
 
-export default function ProductDetailModal({ product, open, onClose }: ProductDetailModalProps) {
+export default function ProductDetailModal({ 
+  product, 
+  storeDetails, 
+  categoryDetails, 
+  onClose 
+}: ProductDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const historyPushedRef = useRef(false);
   const isClosingRef = useRef(false);
-
-  const { data: categories = [] } = useGetAllCategories();
-  const { data: storeDetails } = useGetStoreDetails();
-
-  const categoryName = categories.find(
-    (cat) => cat.id === product.categoryId
-  )?.name;
-
-  const isStoreDetailsLoading = !storeDetails;
 
   // Unified close handler
   const handleClose = useRef(() => {
@@ -46,8 +42,6 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
 
   // Handle popstate events
   useEffect(() => {
-    if (!open) return;
-
     const handlePopState = () => {
       // Reset history flag and close modal
       historyPushedRef.current = false;
@@ -56,20 +50,16 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [open, onClose]);
+  }, [onClose]);
 
   // Push history state when modal opens
   useEffect(() => {
-    if (open) {
-      window.history.pushState({ modalOpen: true }, '');
-      historyPushedRef.current = true;
-    }
-  }, [open]);
+    window.history.pushState({ modalOpen: true }, '');
+    historyPushedRef.current = true;
+  }, []);
 
   // Handle ESC key
   useEffect(() => {
-    if (!open) return;
-
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();
@@ -78,12 +68,10 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [open, handleClose]);
+  }, [handleClose]);
 
   // Focus trap
   useEffect(() => {
-    if (!open) return;
-
     // Store previous focus
     previousFocusRef.current = document.activeElement as HTMLElement;
 
@@ -98,24 +86,22 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
         previousFocusRef.current.focus();
       }
     };
-  }, [open]);
+  }, []);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (open) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
 
-      return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [open]);
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -124,8 +110,6 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
       isClosingRef.current = false;
     };
   }, []);
-
-  if (!open) return null;
 
   // Validate required product fields
   const hasRequiredFields = product && product.barcode && product.name && product.categoryId !== undefined;
@@ -163,9 +147,9 @@ export default function ProductDetailModal({ product, open, onClose }: ProductDe
             <ProductDetailView
               barcode={product.barcode}
               product={product}
-              categoryName={categoryName}
+              categoryDetails={categoryDetails}
               storeDetails={storeDetails}
-              isStoreDetailsLoading={isStoreDetailsLoading}
+              isStoreDetailsLoading={false}
               showCloseButton={true}
               onClose={handleClose}
             />

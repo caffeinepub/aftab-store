@@ -1,20 +1,66 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Fix ProductDetailModal double-click-to-close by correcting history.pushState/popstate handling so close button, overlay click, ESC, and browser back all close consistently.",
+  "summary": "Front-end updates for Aftab Store, focusing on optimizing the ProductDetailModal by eliminating internal API calls and passing all required data from parent pages/components.",
   "architectural_notes": [
-    "ProductDetailModal should push a history state when opened and close via popstate; use refs (e.g., isClosingRef, historyPushedRef) to prevent race conditions and double-close/double-click behavior."
+    "Do not remove/modify/overwrite the :root CSS custom properties block in index.css containing theme color variables; append new styles only below it without changing names/values/structure."
   ],
-  "known_issues": [
-    "ProductDetailModal currently requires double-click on close button due to history.back()/popstate conflict causing inconsistent close behavior."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-update-frontend-src-components-productdetailmodal-tsx-history-management-so-the-modal-closes-on-a-single-click-of-the-close-button-by-properly-coordinating-history-pushstate-window-history-back-and-the-popstate-listener-using-refs-to-avoid-race-conditions-specifically-a-when-open-becomes-true-push-a-history-state-once-and-set-a-historypushedref-flag-b-implement-a-unified-close-handler-guarded-by-isclosingref-that-calls-window-history-back-only-when-a-modal-history-entry-was-pushed-otherwise-calls-onclose-directly-and-does-not-clear-historypushedref-before-triggering-back-c-add-a-popstate-listener-that-while-the-modal-is-open-clears-historypushedref-and-calls-onclose-so-browser-back-and-the-close-button-s-history-back-reliably-closes-the-modal-in-one-action",
-      "title": "Update `frontend/src/components/ProductDetailModal.tsx` history management so the modal closes on a single click of the close button by properly coordinating `history.pushState`, `window.history.back()`, and the `popstate` listener using refs to avoid race conditions. Specifically: (a) when `open` becomes true, push a history state once and set a `historyPushedRef` flag; (b) implement a unified close handler guarded by `isClosingRef` that calls `window.history.back()` only when a modal history entry was pushed (otherwise calls `onClose()` directly) and does not clear `historyPushedRef` before triggering `back()`; (c) add a `popstate` listener that, while the modal is open, clears `historyPushedRef` and calls `onClose()` so browser back (and the close button’s `history.back()`) reliably closes the modal in one action.",
+      "id": "feature-refactor-productdetailmodal-to-make-zero-internal-api-calls-by-removing-usegetallcategories-and-usegetstoredetails-usage-and-instead-require-all-needed-data-via-props-product-storedetails-categorydetails-id-name-and-onclose-remove-any-in-modal-category-lookup-mapping-logic",
+      "title": "Refactor `ProductDetailModal` to make zero internal API calls by removing `useGetAllCategories()` and `useGetStoreDetails()` usage, and instead require all needed data via props: `product`, `storeDetails`, `categoryDetails {id, name}`, and `onClose`. Remove any in-modal category lookup/mapping logic.",
       "reqIds": [
         "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-modal-rendering-flow-on-the-home-page-so-homepage-passes-storedetails-loaded-once-on-the-page-and-categorydetails-id-name-from-the-homepage-category-context-to-productdetailmodal-when-a-product-is-selected-from-the-homepage-category-sections",
+      "title": "Update the modal rendering flow on the Home page so `HomePage` passes `storeDetails` (loaded once on the page) and `categoryDetails` (id + name from the homepage category context) to `ProductDetailModal` when a product is selected from the homepage category sections.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-homepage-category-browsing-components-so-the-product-selection-callback-includes-enough-category-context-to-build-categorydetails-id-and-name-without-any-additional-api-calls-when-opening-the-modal-from-category-product-grids",
+      "title": "Update homepage category browsing components so the product selection callback includes enough category context to build `categoryDetails` (id and name) without any additional API calls when opening the modal from category product grids.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-refactor-searchbar-so-it-does-not-fetch-store-details-itself-for-modal-use-instead-it-receives-storedetails-from-the-home-page-and-passes-storedetails-product-and-categorydetails-into-productdetailmodal-for-both-autocomplete-click-and-full-results-click-flows-ensure-the-autocomplete-dropdown-closes-when-an-item-is-selected-and-the-modal-opens-for-that-specific-product-without-triggering-any-additional-data-fetches-in-the-modal",
+      "title": "Refactor `SearchBar` so it does not fetch store details itself for modal use; instead it receives `storeDetails` from the Home page and passes `storeDetails`, `product`, and `categoryDetails` into `ProductDetailModal` for both autocomplete-click and full-results-click flows. Ensure the autocomplete dropdown closes when an item is selected and the modal opens for that specific product without triggering any additional data fetches in the modal.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-categorypage-so-storedetails-is-loaded-once-on-the-category-page-and-passed-into-productdetailmodal-along-with-categorydetails-sourced-from-the-current-category-page-context-current-category-id-and-name-the-modal-must-not-perform-any-data-fetching",
+      "title": "Update `CategoryPage` so `storeDetails` is loaded once on the category page and passed into `ProductDetailModal` along with `categoryDetails` sourced from the current category page context (current category id and name). The modal must not perform any data fetching.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-product-detail-ui-displayed-inside-the-modal-to-use-categorydetails-for-category-display-and-navigation-and-update-the-category-navigation-link-to-use-path-parameter-format-category-categorydetails-id-remove-any-reliance-on-categoryname-derived-from-fetched-categories-for-the-modal-path",
+      "title": "Update the product detail UI displayed inside the modal to use `categoryDetails` for category display and navigation, and update the category navigation link to use path-parameter format `/category/${categoryDetails.id}`. Remove any reliance on `categoryName` derived from fetched categories for the modal path.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-support-in-the-public-router-for-category-navigation-by-path-parameter-category-categoryid-while-keeping-the-existing-standalone-product-page-route-product-barcode-unchanged-ensure-the-modal-category-link-works-with-the-new-path-parameter-format-without-breaking-existing-category-navigation-patterns-elsewhere-in-the-app",
+      "title": "Add support in the public router for category navigation by path parameter `/category/$categoryId` while keeping the existing standalone product page route `/product/$barcode` unchanged. Ensure the modal category link works with the new path parameter format without breaking existing category navigation patterns elsewhere in the app.",
+      "reqIds": [
+        "REQ-7"
       ],
       "version": 1
     }
@@ -22,12 +68,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Fix ProductDetailModal history management so close button closes on single click while preserving overlay/ESC/back-button behavior (pushState + popstate with refs to avoid race conditions).",
+      "summary": "Eliminate all API calls inside ProductDetailModal; pass product, storeDetails, and categoryDetails via props from parent components (Home, Category, Search, Autocomplete) and keep standalone /product/$barcode page unchanged",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Fix ProductDetailModal double-click close by correcting history/popstate handling",
+  "projectName": "Aftab Store",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -6,12 +6,12 @@ import CategoriesDisplay from '../components/home/CategoriesDisplay';
 import ProductDetailModal from '../components/ProductDetailModal';
 import { useGetCategoriesWithProducts, useGetStoreDetails } from '../hooks/useQueries';
 import { Loader2 } from 'lucide-react';
-import type { Product } from '../backend';
+import type { ProductSelection } from '../types/productDetail';
 
 export default function HomePage() {
   const queryClient = useQueryClient();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProductData, setSelectedProductData] = useState<ProductSelection | null>(null);
   const { data, isLoading, isError } = useGetCategoriesWithProducts(0, 5);
   const { data: storeDetails } = useGetStoreDetails();
 
@@ -26,25 +26,24 @@ export default function HomePage() {
   // Cleanup on unmount: remove Home-owned queries
   useEffect(() => {
     return () => {
-      queryClient.removeQueries({ queryKey: ['categoriesWithProducts'] });
-      // Reset selected product state
-      setSelectedProduct(null);
+      queryClient.removeQueries({ queryKey: ['categoriesWithProducts'], exact: false });
+      queryClient.removeQueries({ queryKey: ['search'], exact: false });
     };
   }, [queryClient]);
 
-  const handleProductSelect = (product: Product) => {
-    setSelectedProduct(product);
+  const handleProductSelect = (selection: ProductSelection) => {
+    setSelectedProductData(selection);
   };
 
   const handleCloseModal = () => {
-    setSelectedProduct(null);
+    setSelectedProductData(null);
   };
 
   return (
     <div className="w-full">
       <StoreBanner />
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8">
-        <SearchBar />
+        <SearchBar storeDetails={storeDetails} onProductSelect={handleProductSelect} />
         
         {/* Initial Loading State */}
         {isInitialLoading && (
@@ -75,10 +74,11 @@ export default function HomePage() {
       </div>
 
       {/* Product Detail Modal */}
-      {selectedProduct && (
+      {selectedProductData && storeDetails && (
         <ProductDetailModal
-          product={selectedProduct}
-          open={!!selectedProduct}
+          product={selectedProductData.product}
+          storeDetails={storeDetails}
+          categoryDetails={selectedProductData.categoryDetails}
           onClose={handleCloseModal}
         />
       )}

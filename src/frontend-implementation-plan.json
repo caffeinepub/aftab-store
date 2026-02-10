@@ -1,25 +1,164 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix ProductDetailModal single-click close via correct history/popstate coordination",
+  "title": "Refactor ProductDetailModal to be fully prop-driven (no internal fetching) and support /category/:id routing",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Adjust ProductDetailModal history push/back + popstate handling using refs so the close button and browser back reliably close the modal in one action without UI changes.",
+      "summary": "Refactor ProductDetailModal to remove internal fetching and require product/store/category data via props only.",
       "acceptanceCriteria": [
-        "When the ProductDetailModal is open, clicking the close (X) button closes the modal with a single click (no second click required).",
-        "When the ProductDetailModal is open, pressing the browser back button closes the modal and the user remains on the same in-app page (e.g., Home/Category/Search) without navigating away.",
-        "Opening the ProductDetailModal pushes exactly one history entry per open cycle (no repeated pushes while it remains open).",
-        "Closing via the close button uses `window.history.back()` only when a modal history entry was pushed; otherwise it calls `onClose()` directly.",
-        "The `popstate` handler closes the modal reliably during the open state and resets internal history-tracking refs so subsequent opens/closes behave consistently.",
-        "Overlay click-to-close and ESC-to-close continue to function (no regressions).",
-        "Do not change modal structure, styling, layout, or close button positioning in the UI."
+        "`frontend/src/components/ProductDetailModal.tsx` no longer imports or calls `useGetAllCategories` or `useGetStoreDetails`.",
+        "Opening the modal never triggers network requests attributable to the modal component itself (no React Query hooks executed inside the modal).",
+        "`ProductDetailModal` compiles with the new props interface and renders without relying on any fetched category/store data.",
+        "All existing modal behaviors are preserved (overlay click close, ESC close, focus trap, body scroll lock, close button positioning, and browser back button/popstate handling)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/ProductDetailModal.tsx",
           "operation": "modify",
-          "description": "Revise only the modal history/popstate close logic: (1) on `open === true`, push a single history state once per open cycle and set `historyPushedRef`; (2) implement a unified close handler guarded by `isClosingRef` that calls `window.history.back()` only if `historyPushedRef` is true (and crucially does not clear `historyPushedRef` before triggering `back()`), otherwise calls `onClose()` directly; (3) add/adjust a `popstate` listener that, while the modal is open, clears `historyPushedRef` and calls `onClose()` so both browser back and the close button’s `history.back()` reliably close the modal in one action. Preserve overlay click and ESC close behavior, and do not change modal structure/styling/layout."
+          "description": "Remove `useGetAllCategories()` and `useGetStoreDetails()` usage and related imports/loading UI; update props to be data-driven with `product`, `storeDetails`, `categoryDetails` (no in-modal lookup/mapping), and `onClose`. Preserve all existing modal mechanics (overlay/ESC/focus trap/body scroll lock/history+popstate) without relying on an `open` prop by treating mount/unmount as open/close."
+        },
+        {
+          "path": "frontend/src/types/productDetail.ts",
+          "operation": "create",
+          "description": "Add shared TypeScript types for `CategoryDetails { id: string; name?: string }` and any modal selection shapes needed by callers, so the new prop-driven contract is enforced at compile time."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Update HomePage modal flow to pass storeDetails (loaded once) and categoryDetails derived from homepage category context.",
+      "acceptanceCriteria": [
+        "`frontend/src/pages/HomePage.tsx` passes `storeDetails` and `categoryDetails` into `ProductDetailModal` alongside `product`.",
+        "Selecting a product from any homepage category section opens the modal instantly and the modal shows the correct category name and a working category navigation link.",
+        "No additional store/category fetching is performed when opening the modal from the homepage category sections beyond the single `useGetStoreDetails()` call already on the homepage."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "modify",
+          "description": "Refactor selection state to store both `product` and `categoryDetails` (derived at click time from already-loaded homepage category data). Pass `storeDetails` (from the existing homepage-level `useGetStoreDetails()` call) and `categoryDetails` into `ProductDetailModal`. Also pass `storeDetails` down to `SearchBar` via props so SearchBar no longer fetches it."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Update homepage category browsing components to provide categoryDetails (id+name) in the product selection callback without extra fetching.",
+      "acceptanceCriteria": [
+        "The selection flow from homepage category sections provides `categoryDetails: {id, name}` at selection time (derived from the already-loaded `CategoryWithProducts.category`).",
+        "No new React Query hooks or actor calls are added for resolving category name/id at click time.",
+        "TypeScript types are updated so the new selection callback shape is enforced at compile time."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/home/CategoriesDisplay.tsx",
+          "operation": "modify",
+          "description": "Change `onProductSelect` callback type to pass a typed selection object that includes both `product` and `categoryDetails` (id+name), without adding any new fetching logic."
+        },
+        {
+          "path": "frontend/src/components/home/CategorySection.tsx",
+          "operation": "modify",
+          "description": "Wrap the product selection handler so it enriches the selected `product` with `categoryDetails` derived from `categoryWithProducts.category` (id+name) before calling the parent callback."
+        },
+        {
+          "path": "frontend/src/components/home/ProductGrid.tsx",
+          "operation": "modify",
+          "description": "Update prop types/wiring to forward the enriched selection callback shape (or a compatible handler) down to `ProductCard` without adding any new React Query hooks or actor calls."
+        },
+        {
+          "path": "frontend/src/components/home/ProductCard.tsx",
+          "operation": "modify",
+          "description": "Update `onSelect` typing to align with the updated selection flow while preserving existing behavior when `onSelect` is not provided (navigate to `/product/$barcode` unchanged)."
+        },
+        {
+          "path": "frontend/src/types/productDetail.ts",
+          "operation": "modify",
+          "description": "Add/adjust exported types for homepage selection callbacks (e.g., `ProductSelection`) so the new callback shape is enforced across HomePage and the home browsing components."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Refactor SearchBar to receive storeDetails from HomePage and open ProductDetailModal with store/product/categoryDetails without modal fetching.",
+      "acceptanceCriteria": [
+        "`frontend/src/components/SearchBar.tsx` no longer calls `useGetStoreDetails()` (store details are supplied by a parent prop).",
+        "Clicking an autocomplete suggestion closes the dropdown and opens the modal for the selected product with no modal-triggered API calls.",
+        "Clicking a product card in the full results grid opens the modal with no modal-triggered API calls.",
+        "`categoryDetails` is derived from the search result product data when available; if category name is missing in the search result payload, the modal still opens and gracefully omits category display/link rather than fetching categories."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/SearchBar.tsx",
+          "operation": "modify",
+          "description": "Remove `useGetStoreDetails()` usage and accept `storeDetails` via props from the parent page. Update modal-open flow (autocomplete click + full results click) to set selection state that includes `product` and a best-effort `categoryDetails` derived from the product (use product.categoryId as id; omit name when unavailable). Ensure autocomplete closes on selection and pass `storeDetails`, `product`, and `categoryDetails` to `ProductDetailModal` without introducing any new fetches."
+        },
+        {
+          "path": "frontend/src/types/productDetail.ts",
+          "operation": "modify",
+          "description": "Ensure `CategoryDetails.name` is optional in the shared type so SearchBar can open the modal without fetching category names, and the UI can omit the category section when name is missing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Update CategoryPage to load storeDetails once and pass storeDetails + categoryDetails from page context into ProductDetailModal.",
+      "acceptanceCriteria": [
+        "`frontend/src/pages/CategoryPage.tsx` passes `storeDetails` and `categoryDetails` into `ProductDetailModal` alongside `product`.",
+        "Opening the modal from category product cards does not cause any API calls from the modal.",
+        "The modal displays the category name and the category navigation link correctly for category-page-opened modals."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/CategoryPage.tsx",
+          "operation": "modify",
+          "description": "Refactor modal selection state to include `categoryDetails` sourced from the current category page context (current category id and name). Pass page-level `storeDetails` (already loaded once on the page) and `categoryDetails` into `ProductDetailModal` so the modal performs no data fetching."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Update modal product detail UI to use categoryDetails for display/navigation and link to /category/{id} (path param).",
+      "acceptanceCriteria": [
+        "When the modal is opened, the category section uses the passed `categoryDetails.name` for display and navigates to `/category/{id}` when clicked.",
+        "No category lookup/mapping against a fetched categories list exists in the modal-opened product detail flow.",
+        "All other existing modal UI actions (share, contact/WhatsApp) continue to function as before using `storeDetails` passed via props."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ProductDetailView.tsx",
+          "operation": "modify",
+          "description": "Add support for a `categoryDetails` prop and use it (when present) for category display and navigation using the path-parameter format `/category/${categoryDetails.id}`. Keep existing `categoryName` behavior for the standalone product page to avoid changing `/product/$barcode` behavior."
+        },
+        {
+          "path": "frontend/src/components/ProductDetailModal.tsx",
+          "operation": "modify",
+          "description": "Update `ProductDetailModal` to pass `categoryDetails` through to `ProductDetailView` (instead of `categoryName` derived from fetched categories) and to rely on passed `storeDetails` for share/contact actions."
+        },
+        {
+          "path": "frontend/src/types/productDetail.ts",
+          "operation": "modify",
+          "description": "Export/update `CategoryDetails` type used by `ProductDetailView` and modal callers to ensure consistent typing for id+name across the app."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Add router support for /category/:categoryId while keeping /product/$barcode unchanged and preserving /category?id= compatibility.",
+      "acceptanceCriteria": [
+        "The application supports navigating to a category page via `/category/{id}` path parameter format.",
+        "The existing `/product/$barcode` route remains unchanged and continues working as-is.",
+        "If the app previously supported `/category?id=...`, it continues to work (backward compatible) or is redirected without user-visible errors."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register an additional public category route using path-parameter format `/category/$categoryId` that renders the existing category page UI, while keeping the current `/category` search-param route for backward compatibility. Do not change the `/product/$barcode` route."
+        },
+        {
+          "path": "frontend/src/pages/CategoryPage.tsx",
+          "operation": "modify",
+          "description": "Update category id resolution to support both navigation styles: path parameter `/category/$categoryId` and legacy search-param `/category?id=...` without user-visible errors. Ensure modal category navigation (from `ProductDetailView`) works with the new path-param route."
         }
       ]
     }

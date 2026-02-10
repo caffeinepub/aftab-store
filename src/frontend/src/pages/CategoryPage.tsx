@@ -1,32 +1,46 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearch, useNavigate } from '@tanstack/react-router';
+import { useParams, useSearch, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useGetCategoryById, useGetCategoryProductsPaginated, useGetStoreDetails } from '../hooks/useQueries';
+import { useActor } from '../hooks/useActor';
 import { Button } from '../components/ui/button';
 import ProductCard from '../components/home/ProductCard';
 import ProductDetailModal from '../components/ProductDetailModal';
 import type { Product } from '../backend';
+import type { ProductSelection } from '../types/productDetail';
 
 const PRODUCTS_PER_PAGE = 15;
 const SCROLL_THRESHOLD = 500;
 const COOLDOWN_MS = 300;
 
 export default function CategoryPage() {
+  // Support both path param and search param for backward compatibility
+  const params = useParams({ from: '/public-layout/category/$categoryId' });
   const search = useSearch({ from: '/public-layout/category' });
-  const categoryId = search.id || '';
+  const categoryId = params?.categoryId || search?.id || '';
+  
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const actorState = useActor();
 
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProductData, setSelectedProductData] = useState<ProductSelection | null>(null);
   const [offset, setOffset] = useState(0);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [stableActor, setStableActor] = useState<typeof actorState.actor>(null);
 
   const loadingRef = useRef(false);
   const lastLoadTimeRef = useRef(0);
   const rafIdRef = useRef<number | null>(null);
+
+  // Stabilize actor reference for pagination
+  useEffect(() => {
+    if (actorState.actor && !stableActor) {
+      setStableActor(actorState.actor);
+    }
+  }, [actorState.actor, stableActor]);
 
   // Fetch category details
   const { data: category } = useGetCategoryById(categoryId);
@@ -64,18 +78,13 @@ export default function CategoryPage() {
   // Cleanup on unmount: remove Category-owned queries
   useEffect(() => {
     return () => {
-      queryClient.removeQueries({ queryKey: ['category', categoryId] });
-      queryClient.removeQueries({ queryKey: ['categoryProducts', categoryId] });
-      // Reset local state
-      setAllProducts([]);
-      setOffset(0);
-      setHasMore(true);
-      setSelectedProduct(null);
+      queryClient.removeQueries({ queryKey: ['category'], exact: false });
+      queryClient.removeQueries({ queryKey: ['categoryProducts'], exact: false });
     };
-  }, [queryClient, categoryId]);
+  }, [queryClient]);
 
   const loadMoreProducts = useCallback(async () => {
-    if (!categoryId || loadingRef.current || !hasMore) return;
+    if (!categoryId || loadingRef.current || !hasMore || !stableActor) return;
 
     const now = Date.now();
     if (now - lastLoadTimeRef.current < COOLDOWN_MS) {
@@ -90,15 +99,16 @@ export default function CategoryPage() {
       const result = await queryClient.fetchQuery({
         queryKey: ['categoryProducts', categoryId, offset, PRODUCTS_PER_PAGE],
         queryFn: async () => {
-          const actor = (window as any).__actor__;
-          if (!actor) throw new Error('Actor not available');
-          return actor.getCategoryProductsPaginated(
+          if (!stableActor) throw new Error('Actor not available');
+          return stableActor.getCategoryProductsPaginated(
             BigInt(categoryId),
             BigInt(offset),
             BigInt(PRODUCTS_PER_PAGE),
             null
           );
         },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        gcTime: 1000 * 60 * 30, // 30 minutes
       });
 
       const newProducts = result.products;
@@ -114,7 +124,7 @@ export default function CategoryPage() {
       setIsLoadingMore(false);
       loadingRef.current = false;
     }
-  }, [categoryId, offset, hasMore, queryClient]);
+  }, [categoryId, offset, hasMore, queryClient, stableActor]);
 
   // Infinite scroll handler
   useEffect(() => {
@@ -148,11 +158,18 @@ export default function CategoryPage() {
   }, [hasMore, isInitialLoading, isLoadingMore, loadMoreProducts]);
 
   const handleProductSelect = (product: Product) => {
-    setSelectedProduct(product);
+    const selection: ProductSelection = {
+      product,
+      categoryDetails: {
+        id: categoryId,
+        name: category?.name,
+      },
+    };
+    setSelectedProductData(selection);
   };
 
   const handleCloseModal = () => {
-    setSelectedProduct(null);
+    setSelectedProductData(null);
   };
 
   const getProductCountText = (count: number) => {
@@ -246,10 +263,11 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {selectedProduct && (
+      {selectedProductData && storeDetails && (
         <ProductDetailModal
-          product={selectedProduct}
-          open={!!selectedProduct}
+          product={selectedProductData.product}
+          storeDetails={storeDetails}
+          categoryDetails={selectedProductData.categoryDetails}
           onClose={handleCloseModal}
         />
       )}

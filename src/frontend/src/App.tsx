@@ -43,6 +43,7 @@ const productDetailRoute = createRoute({
   component: ProductDetailPage,
 });
 
+// Category route with search param (legacy support)
 const categoryRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,
   path: '/category',
@@ -52,6 +53,13 @@ const categoryRoute = createRoute({
       id: typeof search.id === 'string' ? search.id : undefined,
     };
   },
+});
+
+// Category route with path param (new)
+const categoryPathRoute = createRoute({
+  getParentRoute: () => publicLayoutRoute,
+  path: '/category/$categoryId',
+  component: CategoryPage,
 });
 
 const contactRoute = createRoute({
@@ -120,6 +128,7 @@ const routeTree = rootRoute.addChildren([
     homeRoute,
     productDetailRoute,
     categoryRoute,
+    categoryPathRoute,
     contactRoute,
     privacyRoute,
   ]),

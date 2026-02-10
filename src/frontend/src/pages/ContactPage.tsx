@@ -24,13 +24,12 @@ export default function ContactPage() {
     }
   }, [isLoading]);
 
-  // Cleanup on unmount: Contact page doesn't own storeDetails globally, so no removal needed
-  // But we can reset local state
+  // Cleanup on unmount: remove Contact page-owned queries
   useEffect(() => {
     return () => {
-      setIsInitialLoading(true);
+      queryClient.removeQueries({ queryKey: ['storeDetails'], exact: false });
     };
-  }, []);
+  }, [queryClient]);
 
   // Initial loading state
   if (isInitialLoading || isLoading) {

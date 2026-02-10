@@ -143,26 +143,34 @@ export function useRemoveAdminRole() {
 
 // CATEGORY QUERIES
 
+// Shared component hook with longer cache time
 export function useGetAllCategories() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [stableActor, setStableActor] = useState(actor);
+  const actorState = useActor();
+  const rawActor = actorState.actor;
+  const actorFetching = actorState.isFetching;
 
+  const [stableActor, setStableActor] = useState<typeof rawActor>(null);
+
+  // Stabilize actor reference
   useEffect(() => {
-    if (actor && !actorFetching) {
-      setStableActor(actor);
+    if (rawActor && !stableActor) {
+      setStableActor(rawActor);
     }
-  }, [actor, actorFetching]);
+  }, [rawActor, stableActor]);
 
   return useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn: async () => {
-      if (!stableActor) return [];
+    queryFn: async ({ signal }) => {
+      if (!stableActor) throw new Error('Actor not available');
+      if (signal?.aborted) throw new Error('Query aborted');
       return stableActor.getAllCategories();
     },
-    enabled: !!stableActor,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    enabled: Boolean(stableActor) && !actorFetching,
+    staleTime: 1000 * 60 * 30, // 30 minutes - shared component, infrequent changes
+    gcTime: 1000 * 60 * 60, // 60 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1,
   });
 }
 
@@ -189,49 +197,65 @@ export function useGetCategoriesPaginated(offset: number, limit: number) {
   });
 }
 
+// Public page hook with standard cache configuration
 export function useGetCategoriesWithProducts(offset: number, limit: number) {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [stableActor, setStableActor] = useState(actor);
+  const actorState = useActor();
+  const rawActor = actorState.actor;
+  const actorFetching = actorState.isFetching;
 
+  const [stableActor, setStableActor] = useState<typeof rawActor>(null);
+
+  // Stabilize actor reference
   useEffect(() => {
-    if (actor && !actorFetching) {
-      setStableActor(actor);
+    if (rawActor && !stableActor) {
+      setStableActor(rawActor);
     }
-  }, [actor, actorFetching]);
+  }, [rawActor, stableActor]);
 
   return useQuery<CategoryWithProducts[]>({
     queryKey: ['categoriesWithProducts', offset, limit],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!stableActor) throw new Error('Actor not available');
+      if (signal?.aborted) throw new Error('Query aborted');
       return stableActor.getCategoriesWithProducts(BigInt(offset), BigInt(limit));
     },
-    enabled: !!stableActor,
+    enabled: Boolean(stableActor) && !actorFetching,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1,
   });
 }
 
+// Public page hook with standard cache configuration
 export function useGetCategoryById(categoryId: string) {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [stableActor, setStableActor] = useState(actor);
+  const actorState = useActor();
+  const rawActor = actorState.actor;
+  const actorFetching = actorState.isFetching;
 
+  const [stableActor, setStableActor] = useState<typeof rawActor>(null);
+
+  // Stabilize actor reference
   useEffect(() => {
-    if (actor && !actorFetching) {
-      setStableActor(actor);
+    if (rawActor && !stableActor) {
+      setStableActor(rawActor);
     }
-  }, [actor, actorFetching]);
+  }, [rawActor, stableActor]);
 
   return useQuery<Category | null>({
     queryKey: ['category', categoryId],
-    queryFn: async () => {
-      if (!stableActor) return null;
+    queryFn: async ({ signal }) => {
+      if (!stableActor) throw new Error('Actor not available');
+      if (signal?.aborted) throw new Error('Query aborted');
       return stableActor.getCategoryById(BigInt(categoryId));
     },
-    enabled: !!stableActor && !!categoryId,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    enabled: Boolean(stableActor) && !actorFetching && !!categoryId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1,
   });
 }
 
@@ -355,26 +379,34 @@ export function useGetProducts(
   });
 }
 
+// Public page hook with standard cache configuration
 export function useGetProduct(barcode: string) {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [stableActor, setStableActor] = useState(actor);
+  const actorState = useActor();
+  const rawActor = actorState.actor;
+  const actorFetching = actorState.isFetching;
 
+  const [stableActor, setStableActor] = useState<typeof rawActor>(null);
+
+  // Stabilize actor reference
   useEffect(() => {
-    if (actor && !actorFetching) {
-      setStableActor(actor);
+    if (rawActor && !stableActor) {
+      setStableActor(rawActor);
     }
-  }, [actor, actorFetching]);
+  }, [rawActor, stableActor]);
 
   return useQuery<Product | null>({
     queryKey: ['product', barcode],
-    queryFn: async () => {
-      if (!stableActor) return null;
+    queryFn: async ({ signal }) => {
+      if (!stableActor) throw new Error('Actor not available');
+      if (signal?.aborted) throw new Error('Query aborted');
       return stableActor.getProduct(barcode);
     },
-    enabled: !!stableActor && !!barcode,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    enabled: Boolean(stableActor) && !actorFetching && !!barcode,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1,
   });
 }
 
@@ -401,24 +433,30 @@ export function useGetProductsByCategory(categoryId: number) {
   });
 }
 
+// Public page hook with standard cache configuration
 export function useGetCategoryProductsPaginated(
   categoryId: string,
   offset: number,
   limit: number
 ) {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [stableActor, setStableActor] = useState(actor);
+  const actorState = useActor();
+  const rawActor = actorState.actor;
+  const actorFetching = actorState.isFetching;
 
+  const [stableActor, setStableActor] = useState<typeof rawActor>(null);
+
+  // Stabilize actor reference
   useEffect(() => {
-    if (actor && !actorFetching) {
-      setStableActor(actor);
+    if (rawActor && !stableActor) {
+      setStableActor(rawActor);
     }
-  }, [actor, actorFetching]);
+  }, [rawActor, stableActor]);
 
   return useQuery<{ products: Product[]; totalCount: bigint }>({
     queryKey: ['categoryProducts', categoryId, offset, limit],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!stableActor) throw new Error('Actor not available');
+      if (signal?.aborted) throw new Error('Query aborted');
       return stableActor.getCategoryProductsPaginated(
         BigInt(categoryId),
         BigInt(offset),
@@ -426,10 +464,12 @@ export function useGetCategoryProductsPaginated(
         null
       );
     },
-    enabled: !!stableActor && !!categoryId,
+    enabled: Boolean(stableActor) && !actorFetching && !!categoryId,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1,
   });
 }
 
@@ -601,59 +641,109 @@ export function useImportProducts() {
 
 // SEARCH QUERIES
 
+// Public page hook with standard cache configuration
 export function useSearchProducts(searchValue: string) {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [stableActor, setStableActor] = useState(actor);
+  const actorState = useActor();
+  const rawActor = actorState.actor;
+  const actorFetching = actorState.isFetching;
 
+  const [stableActor, setStableActor] = useState<typeof rawActor>(null);
+
+  // Stabilize actor reference
   useEffect(() => {
-    if (actor && !actorFetching) {
-      setStableActor(actor);
+    if (rawActor && !stableActor) {
+      setStableActor(rawActor);
     }
-  }, [actor, actorFetching]);
-
-  const filters = { searchValue };
+  }, [rawActor, stableActor]);
 
   return useQuery<ProductSearchResults>({
-    queryKey: ['search', searchValue, filters],
-    queryFn: async () => {
+    queryKey: ['search', searchValue],
+    queryFn: async ({ signal }) => {
       if (!stableActor) throw new Error('Actor not available');
-      
+      if (signal?.aborted) throw new Error('Query aborted');
+
       const criteria: ProductSearchCriteria = {
         searchBy: 'name',
         searchValue: searchValue,
+        categoryId: undefined,
+        featuredOnly: undefined,
+        featuredFirst: true,
       };
 
       return stableActor.searchProducts(criteria);
     },
-    enabled: !!stableActor && searchValue.length >= 2,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    enabled: Boolean(stableActor) && !actorFetching && searchValue.length >= 2,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1,
   });
 }
 
 // STORE DETAILS QUERIES
 
+// Shared component hook with longer cache time
 export function useGetStoreDetails() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [stableActor, setStableActor] = useState(actor);
+  const actorState = useActor();
+  const rawActor = actorState.actor;
+  const actorFetching = actorState.isFetching;
 
+  const [stableActor, setStableActor] = useState<typeof rawActor>(null);
+
+  // Stabilize actor reference
   useEffect(() => {
-    if (actor && !actorFetching) {
-      setStableActor(actor);
+    if (rawActor && !stableActor) {
+      setStableActor(rawActor);
     }
-  }, [actor, actorFetching]);
+  }, [rawActor, stableActor]);
 
   return useQuery<StoreDetails>({
     queryKey: ['storeDetails'],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!stableActor) throw new Error('Actor not available');
+      if (signal?.aborted) throw new Error('Query aborted');
       return stableActor.getStoreDetails();
     },
-    enabled: !!stableActor,
-    staleTime: 1000 * 60 * 30, // 30 minutes
+    enabled: Boolean(stableActor) && !actorFetching,
+    staleTime: 1000 * 60 * 30, // 30 minutes - shared component, infrequent changes
+    gcTime: 1000 * 60 * 60, // 60 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1,
+  });
+}
+
+export function useCreateStoreDetails() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (details: {
+      name: string;
+      banner?: ExternalBlob;
+      address: string;
+      phone: string;
+      whatsapp: string;
+      email: string;
+      storeHours: StoreHours;
+      coordinates: Coordinates;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.createStoreDetails(
+        details.name,
+        details.banner || null,
+        details.address,
+        details.phone,
+        details.whatsapp,
+        details.email,
+        details.storeHours,
+        details.coordinates
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storeDetails'] });
+    },
   });
 }
 
@@ -662,7 +752,7 @@ export function useUpdateStoreDetails() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (storeDetails: {
+    mutationFn: async (details: {
       name: string;
       banner?: ExternalBlob;
       address: string;
@@ -674,18 +764,43 @@ export function useUpdateStoreDetails() {
     }) => {
       if (!actor) throw new Error('Actor not available');
       return actor.updateStoreDetails(
-        storeDetails.name,
-        storeDetails.banner || null,
-        storeDetails.address,
-        storeDetails.phone,
-        storeDetails.whatsapp,
-        storeDetails.email,
-        storeDetails.storeHours,
-        storeDetails.coordinates
+        details.name,
+        details.banner || null,
+        details.address,
+        details.phone,
+        details.whatsapp,
+        details.email,
+        details.storeHours,
+        details.coordinates
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storeDetails'] });
+    },
+  });
+}
+
+// UTILITY QUERIES
+
+export function useUpdateCategoryId() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      oldCategoryId,
+      newCategoryId,
+    }: {
+      oldCategoryId: bigint;
+      newCategoryId: bigint;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.updateCategoryId(oldCategoryId, newCategoryId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['categoriesWithProducts'] });
+      queryClient.invalidateQueries({ queryKey: ['categoryProducts'] });
     },
   });
 }

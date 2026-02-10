@@ -59,9 +59,9 @@ export default function ProductDetailPage() {
   // Cleanup on unmount: remove Product Detail page-owned queries
   useEffect(() => {
     return () => {
-      queryClient.removeQueries({ queryKey: ['product', barcode] });
+      queryClient.removeQueries({ queryKey: ['product'], exact: false });
     };
-  }, [queryClient, barcode]);
+  }, [queryClient]);
 
   // Loading state
   if (isInitialLoading || productLoading) {
