@@ -1,84 +1,25 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Frontend refactor to eliminate all API calls from ProductDetailModal by passing preloaded product, storeDetails, and categoryDetails via props from parent pages (home/category/search), while enforcing modal-only internal navigation for product details and preserving global theme CSS variables.",
+  "summary": "Aftab Store - Internet Identity integration project with custom domain configuration",
   "architectural_notes": [
-    "ProductDetailModal must perform zero API calls; all required data (product, storeDetails, categoryDetails) is passed via props from parent components.",
-    "Home and Category pages load storeDetails once on initial page load (stable actor pattern) and reuse for modal openings.",
-    "Internal navigation must never route to standalone /product/$barcode; all in-app product interactions open ProductDetailModal (standalone page remains for direct URL access only).",
-    "Category links must use query-parameter format /category?id=\"<id>\" with proper encoding.",
-    "Do not modify/overwrite the :root CSS custom properties block in index.css; only append styles below it.",
-    "Home page search box must remain full width of the 1200px container (do not change)."
+    "Internet Identity integration with alternative origins for custom domains (v2.aftabstore.com, aftabstore.com)",
+    "ii-alternative-origins file in .well-known directory for domain compatibility"
   ],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-refactor-productdetailmodal-to-make-zero-react-query-or-any-other-api-calls-internally-by-removing-usegetallcategories-and-usegetstoredetails-usage-and-instead-requiring-all-needed-data-via-props-product-storedetails-categorydetails-id-name-and-onclose",
-      "title": "Refactor `ProductDetailModal` to make zero React Query (or any other) API calls internally by removing `useGetAllCategories()` and `useGetStoreDetails()` usage and instead requiring all needed data via props: `product`, `storeDetails`, `categoryDetails {id, name}`, and `onClose`.",
+      "id": "feature-overwrite-the-content-of-frontend-public-well-known-ii-alternative-origins-with-the-following-exact-json-alternativeorigins-https-v2-aftabstore-com-https-www-v2-aftabstore-com-https-aftabstore-com-https-www-aftabstore-com",
+      "title": "Overwrite the content of frontend/public/.well-known/ii-alternative-origins with the following exact JSON: {\"alternativeOrigins\": [\"https://v2.aftabstore.com\",\"https://www.v2.aftabstore.com\",\"https://aftabstore.com\",\"https://www.aftabstore.com\"]}",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-update-productdetailview-and-modal-rendering-so-category-display-and-navigation-use-categorydetails-passed-from-the-parent-category-name-for-display-category-id-for-navigation-ensure-the-category-navigation-uses-the-query-parameter-format-category-id-id-via-tanstack-router-navigation-and-is-properly-encoded",
-      "title": "Update `ProductDetailView` and modal rendering so category display and navigation use `categoryDetails` passed from the parent (category name for display + category id for navigation). Ensure the category navigation uses the query-parameter format `/category?id=<id>` via TanStack Router navigation and is properly encoded.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-home-page-product-detail-modal-opening-flow-to-pass-storedetails-loaded-once-on-initial-home-load-and-categorydetails-derived-from-existing-home-category-data-into-productdetailmodal-whenever-a-product-is-selected-from-category-sections",
-      "title": "Update Home page product-detail modal opening flow to pass `storeDetails` (loaded once on initial Home load) and `categoryDetails` (derived from existing Home category data) into `ProductDetailModal` whenever a product is selected from category sections.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-search-ui-flows-so-selecting-a-product-from-either-a-autocomplete-dropdown-or-b-full-results-grid-opens-productdetailmodal-using-already-available-parent-provided-storedetails-and-category-details-derived-from-the-selected-search-result-product-data-remove-usegetstoredetails-usage-from-searchbar-to-avoid-duplicate-fetching",
-      "title": "Update Search UI flows so selecting a product from either (a) autocomplete dropdown or (b) full results grid opens `ProductDetailModal` using already-available parent-provided `storeDetails` and category details derived from the selected search result product data; remove `useGetStoreDetails()` usage from `SearchBar` to avoid duplicate fetching.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-category-page-product-detail-modal-opening-flow-to-pass-storedetails-loaded-once-on-category-page-load-and-categorydetails-from-the-current-category-context-into-productdetailmodal-when-a-product-card-is-selected",
-      "title": "Update Category page product-detail modal opening flow to pass `storeDetails` (loaded once on Category page load) and `categoryDetails` from the current category context into `ProductDetailModal` when a product card is selected.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-enforce-modal-only-internal-product-detail-navigation-ensure-public-in-app-interactions-home-category-sections-search-results-autocomplete-category-page-product-grid-do-not-navigate-to-product-barcode-and-instead-open-productdetailmodal-keep-product-barcode-accessible-only-via-direct-url-entry-bookmarks-external-links",
-      "title": "Enforce 'modal-only' internal product detail navigation: ensure public in-app interactions (Home category sections, Search results/autocomplete, Category page product grid) do not navigate to `/product/$barcode` and instead open `ProductDetailModal`. Keep `/product/$barcode` accessible only via direct URL entry/bookmarks/external links.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-preserve-existing-layout-styling-constraints-keep-the-home-page-search-box-full-width-of-the-1200px-container-and-do-not-change-the-root-css-custom-properties-block-in-frontend-src-index-css-append-only-changes-below-the-block-if-any-css-changes-are-needed",
-      "title": "Preserve existing layout/styling constraints: keep the Home page search box full width of the 1200px container, and do not change the `:root` CSS custom properties block in `frontend/src/index.css` (append-only changes below the block if any CSS changes are needed).",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Eliminate ProductDetailModal API calls; pass product/storeDetails/categoryDetails via props from parents; enforce modal-only internal product navigation; keep category link query-param format; preserve homepage search box width and :root CSS variables.",
-      "reqIds": [],
-      "status": "pending"
-    }
-  ],
-  "projectName": "Eliminate API calls inside ProductDetailModal by passing preloaded product, store details, and category details via props",
+  "new_feature_requests": [],
+  "projectName": "Aftab Store",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

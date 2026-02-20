@@ -1,127 +1,36 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T21:26:14.298Z",
+  "generatedAt": "2026-02-20T15:23:10.097Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 7,
-    "implemented": 7,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Refactor `ProductDetailModal` to make zero React Query (or any other) API calls internally by removing `useGetAllCategories()` and `useGetStoreDetails()` usage and instead requiring all needed data via props: `product`, `storeDetails`, `categoryDetails {id, name}`, and `onClose`.",
+        "summary": "Overwrite the content of frontend/public/.well-known/ii-alternative-origins with the following exact JSON: {\"alternativeOrigins\": [\"https://v2.aftabstore.com\",\"https://www.v2.aftabstore.com\",\"https://aftabstore.com\",\"https://www.aftabstore.com\"]}",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/ProductDetailModal.tsx"
+          "frontend/public/.well-known/ii-alternative-origins"
         ],
         "matchedFiles": [
-          "frontend/src/components/ProductDetailModal.tsx"
-        ]
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Update `ProductDetailView` and modal rendering so category display and navigation use `categoryDetails` passed from the parent (category name for display + category id for navigation). Ensure the category navigation uses the query-parameter format `/category?id=<id>` via TanStack Router navigation and is properly encoded.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/ProductDetailView.tsx",
-          "frontend/src/components/ProductDetailModal.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/ProductDetailView.tsx",
-          "frontend/src/components/ProductDetailModal.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Update Home page product-detail modal opening flow to pass `storeDetails` (loaded once on initial Home load) and `categoryDetails` (derived from existing Home category data) into `ProductDetailModal` whenever a product is selected from category sections.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/components/home/CategoriesDisplay.tsx",
-          "frontend/src/components/home/CategorySection.tsx",
-          "frontend/src/components/home/ProductGrid.tsx",
-          "frontend/src/components/home/ProductCard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/components/home/CategoriesDisplay.tsx",
-          "frontend/src/components/home/CategorySection.tsx",
-          "frontend/src/components/home/ProductCard.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Update Search UI flows so selecting a product from either (a) autocomplete dropdown or (b) full results grid opens `ProductDetailModal` using already-available parent-provided `storeDetails` and category details derived from the selected search result product data; remove `useGetStoreDetails()` usage from `SearchBar` to avoid duplicate fetching.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/SearchBar.tsx",
-          "frontend/src/pages/HomePage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/SearchBar.tsx",
-          "frontend/src/pages/HomePage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Update Category page product-detail modal opening flow to pass `storeDetails` (loaded once on Category page load) and `categoryDetails` from the current category context into `ProductDetailModal` when a product card is selected.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/CategoryPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/CategoryPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Enforce 'modal-only' internal product detail navigation: ensure public in-app interactions (Home category sections, Search results/autocomplete, Category page product grid) do not navigate to `/product/$barcode` and instead open `ProductDetailModal`. Keep `/product/$barcode` accessible only via direct URL entry/bookmarks/external links.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/home/ProductCard.tsx",
-          "frontend/src/components/SearchBar.tsx",
-          "frontend/src/pages/CategoryPage.tsx",
-          "frontend/src/pages/HomePage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/home/ProductCard.tsx",
-          "frontend/src/components/SearchBar.tsx",
-          "frontend/src/pages/CategoryPage.tsx",
-          "frontend/src/pages/HomePage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Preserve existing layout/styling constraints: keep the Home page search box full width of the 1200px container, and do not change the `:root` CSS custom properties block in `frontend/src/index.css` (append-only changes below the block if any CSS changes are needed).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/components/SearchBar.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/components/SearchBar.tsx"
+          "frontend/public/.well-known/ii-alternative-origins"
         ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/ProductDetailModal.tsx",
-    "frontend/src/components/ProductDetailView.tsx",
-    "frontend/src/components/SearchBar.tsx",
-    "frontend/src/components/home/CategoriesDisplay.tsx",
-    "frontend/src/components/home/CategorySection.tsx",
-    "frontend/src/components/home/ProductCard.tsx",
-    "frontend/src/pages/CategoryPage.tsx",
-    "frontend/src/pages/HomePage.tsx",
-    "frontend/src/pages/ProductDetailPage.tsx",
+    "frontend/public/.well-known/ii-alternative-origins",
+    "frontend/src/config.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

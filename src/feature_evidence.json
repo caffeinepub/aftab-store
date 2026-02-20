@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-refactor-productdetailmodal-to-make-zero-react-query-or-any-other-api-calls-internally-by-removing-usegetallcategories-and-usegetstoredetails-usage-and-instead-requiring-all-needed-data-via-props-product-storedetails-categorydetails-id-name-and-onclose",
-      "featureTitle": "Refactor `ProductDetailModal` to make zero React Query (or any other) API calls internally by removing `useGetAllCategories()` and `useGetStoreDetails()` usage and instead requiring all needed data via props: `product`, `storeDetails`, `categoryDetails {id, name}`, and `onClose`.",
+      "featureId": "feature-overwrite-the-content-of-frontend-public-well-known-ii-alternative-origins-with-the-following-exact-json-alternativeorigins-https-v2-aftabstore-com-https-www-v2-aftabstore-com-https-aftabstore-com-https-www-aftabstore-com",
+      "featureTitle": "Overwrite the content of frontend/public/.well-known/ii-alternative-origins with the following exact JSON: {\"alternativeOrigins\": [\"https://v2.aftabstore.com\",\"https://www.v2.aftabstore.com\",\"https://aftabstore.com\",\"https://www.aftabstore.com\"]}",
       "files": [
-        "frontend/src/components/ProductDetailModal.tsx"
+        "frontend/public/.well-known/ii-alternative-origins"
       ],
       "components": [
         "authorization@4.0.0",
@@ -18,135 +18,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-productdetailview-and-modal-rendering-so-category-display-and-navigation-use-categorydetails-passed-from-the-parent-category-name-for-display-category-id-for-navigation-ensure-the-category-navigation-uses-the-query-parameter-format-category-id-id-via-tanstack-router-navigation-and-is-properly-encoded",
-      "featureTitle": "Update `ProductDetailView` and modal rendering so category display and navigation use `categoryDetails` passed from the parent (category name for display + category id for navigation). Ensure the category navigation uses the query-parameter format `/category?id=<id>` via TanStack Router navigation and is properly encoded.",
-      "files": [
-        "frontend/src/components/ProductDetailModal.tsx",
-        "frontend/src/components/ProductDetailView.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-home-page-product-detail-modal-opening-flow-to-pass-storedetails-loaded-once-on-initial-home-load-and-categorydetails-derived-from-existing-home-category-data-into-productdetailmodal-whenever-a-product-is-selected-from-category-sections",
-      "featureTitle": "Update Home page product-detail modal opening flow to pass `storeDetails` (loaded once on initial Home load) and `categoryDetails` (derived from existing Home category data) into `ProductDetailModal` whenever a product is selected from category sections.",
-      "files": [
-        "frontend/src/components/home/CategoriesDisplay.tsx",
-        "frontend/src/components/home/CategorySection.tsx",
-        "frontend/src/components/home/ProductCard.tsx",
-        "frontend/src/pages/HomePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-search-ui-flows-so-selecting-a-product-from-either-a-autocomplete-dropdown-or-b-full-results-grid-opens-productdetailmodal-using-already-available-parent-provided-storedetails-and-category-details-derived-from-the-selected-search-result-product-data-remove-usegetstoredetails-usage-from-searchbar-to-avoid-duplicate-fetching",
-      "featureTitle": "Update Search UI flows so selecting a product from either (a) autocomplete dropdown or (b) full results grid opens `ProductDetailModal` using already-available parent-provided `storeDetails` and category details derived from the selected search result product data; remove `useGetStoreDetails()` usage from `SearchBar` to avoid duplicate fetching.",
-      "files": [
-        "frontend/src/components/SearchBar.tsx",
-        "frontend/src/pages/HomePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-category-page-product-detail-modal-opening-flow-to-pass-storedetails-loaded-once-on-category-page-load-and-categorydetails-from-the-current-category-context-into-productdetailmodal-when-a-product-card-is-selected",
-      "featureTitle": "Update Category page product-detail modal opening flow to pass `storeDetails` (loaded once on Category page load) and `categoryDetails` from the current category context into `ProductDetailModal` when a product card is selected.",
-      "files": [
-        "frontend/src/pages/CategoryPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-enforce-modal-only-internal-product-detail-navigation-ensure-public-in-app-interactions-home-category-sections-search-results-autocomplete-category-page-product-grid-do-not-navigate-to-product-barcode-and-instead-open-productdetailmodal-keep-product-barcode-accessible-only-via-direct-url-entry-bookmarks-external-links",
-      "featureTitle": "Enforce 'modal-only' internal product detail navigation: ensure public in-app interactions (Home category sections, Search results/autocomplete, Category page product grid) do not navigate to `/product/$barcode` and instead open `ProductDetailModal`. Keep `/product/$barcode` accessible only via direct URL entry/bookmarks/external links.",
-      "files": [
-        "frontend/src/components/SearchBar.tsx",
-        "frontend/src/components/home/ProductCard.tsx",
-        "frontend/src/pages/CategoryPage.tsx",
-        "frontend/src/pages/HomePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-preserve-existing-layout-styling-constraints-keep-the-home-page-search-box-full-width-of-the-1200px-container-and-do-not-change-the-root-css-custom-properties-block-in-frontend-src-index-css-append-only-changes-below-the-block-if-any-css-changes-are-needed",
-      "featureTitle": "Preserve existing layout/styling constraints: keep the Home page search box full width of the 1200px container, and do not change the `:root` CSS custom properties block in `frontend/src/index.css` (append-only changes below the block if any CSS changes are needed).",
-      "files": [
-        "frontend/src/components/SearchBar.tsx",
-        "frontend/src/pages/HomePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
       ],
       "confidence": "high"
     }

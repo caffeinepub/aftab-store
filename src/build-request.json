@@ -1,155 +1,36 @@
 {
   "kind": "build_request",
-  "title": "Eliminate API calls inside ProductDetailModal by passing preloaded product, store details, and category details via props",
+  "title": "Update Internet Identity alternative origins configuration",
+  "projectName": "Aftab Store",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Refactor `ProductDetailModal` to make zero React Query (or any other) API calls internally by removing `useGetAllCategories()` and `useGetStoreDetails()` usage and instead requiring all needed data via props: `product`, `storeDetails`, `categoryDetails {id, name}`, and `onClose`.",
+      "text": "Overwrite the content of frontend/public/.well-known/ii-alternative-origins with the following exact JSON: {\"alternativeOrigins\": [\"https://v2.aftabstore.com\",\"https://www.v2.aftabstore.com\",\"https://aftabstore.com\",\"https://www.aftabstore.com\"]}",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-last"
         ],
         "quotes": [
-          "Remove all API calls from the ProductDetailModal component and pass all required data from parent components to eliminate unnecessary network requests when opening product details. This is a front end only change",
-          "`useGetAllCategories()` - Remove completely (category details passed from parent)\n- `useGetStoreDetails()` - Remove completely (store details passed from parent)\n\n...Modal should not make any API calls internally"
+          "Overwrite the following content in ii-alternative-origins: {\"alternativeOrigins\": [\"https://v2.aftabstore.com\",\"https://www.v2.aftabstore.com\",\"https://aftabstore.com\",\"https://www.aftabstore.com\"]}"
         ]
       },
       "acceptanceCriteria": [
-        "`frontend/src/components/ProductDetailModal.tsx` no longer imports or calls `useGetAllCategories` or `useGetStoreDetails`.",
-        "Opening the modal from any supported source does not trigger new network requests/React Query fetches from within `ProductDetailModal`.",
-        "`ProductDetailModal` has a props contract that includes: `product`, `storeDetails`, `categoryDetails: { id: number; name: string }`, and `onClose` (additional props are allowed only if they do not reintroduce internal fetching).",
-        "Any category-name lookup/mapping logic previously done in the modal is removed (no `categories.find(...)` in the modal)."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Update `ProductDetailView` and modal rendering so category display and navigation use `categoryDetails` passed from the parent (category name for display + category id for navigation). Ensure the category navigation uses the query-parameter format `/category?id=<id>` via TanStack Router navigation and is properly encoded.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Category page uses query parameter format: `/category?id=\"1\"`\n- Category link in modal should use this exact format with proper encoding",
-          "Use `props.categoryDetails` for category display and navigation\n- **Category Link Format:** Use query parameter format: `/category?id=\"${categoryId}\"`, unchanged"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The category UI in product details reads the category name from `categoryDetails.name` and does not derive it from a fetched categories list.",
-        "Clicking the category link/button navigates to the category page using a query parameter (equivalent to `/category?id=<categoryId>`).",
-        "The category id used for navigation is `categoryDetails.id` (not a lookup via categories fetch).",
-        "All existing product detail UI behavior is preserved (share/copy/contact buttons still work)."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Update Home page product-detail modal opening flow to pass `storeDetails` (loaded once on initial Home load) and `categoryDetails` (derived from existing Home category data) into `ProductDetailModal` whenever a product is selected from category sections.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "From Home Page (when opening modal from category products):\n- `product` - Complete product object from `useGetCategoriesWithProducts()`\n- `storeDetails` - Store details from `useGetStoreDetails()` (loaded once on homepage)\n- `categoryDetails` - Category name and ID from existing category data on homepage",
-          "Home Page Implementation:\n- Load `storeDetails` once on initial homepage load using stable actor pattern\n- Store `storeDetails` in React state or context\n- Extract `categoryDetails` from existing homepage category data structure\n- Pass all required data to ProductDetailModal when opening from any source"
-        ]
-      },
-      "acceptanceCriteria": [
-        "`frontend/src/pages/HomePage.tsx` loads `storeDetails` once and passes it down to the modal opening flow rather than the modal fetching it.",
-        "Home category product selection passes both `product` and the correct `categoryDetails` for that product’s category into the modal.",
-        "`frontend/src/components/home/CategoriesDisplay.tsx` / `CategorySection.tsx` selection wiring supports providing category context to the Home page (e.g., callback signature extended to include category id + name, or equivalent parent-side derivation) without introducing new API calls on modal open."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Update Search UI flows so selecting a product from either (a) autocomplete dropdown or (b) full results grid opens `ProductDetailModal` using already-available parent-provided `storeDetails` and category details derived from the selected search result product data; remove `useGetStoreDetails()` usage from `SearchBar` to avoid duplicate fetching.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Search Components Implementation:\n- Search Results (Enter pressed): Extract `categoryDetails` from search result product data\n- Google-style Autocomplete Results: Extract `categoryDetails` from autocomplete product data\n- Use `storeDetails` from parent homepage component for both search types\n- Pass `storeDetails` from parent homepage component for both search types",
-          "Modal should not make any API calls internally"
-        ]
-      },
-      "acceptanceCriteria": [
-        "`frontend/src/components/SearchBar.tsx` no longer calls `useGetStoreDetails()` (store details are supplied from the Home page).",
-        "Clicking an autocomplete suggestion opens the modal for that product and closes the dropdown, without triggering a full search navigation.",
-        "Clicking a full-results product card opens the modal using the product data already in the results, with no additional data fetch performed by the modal.",
-        "Search results layout behavior remains unchanged (desktop grid 5 columns, mobile 2 columns as currently implemented)."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Update Category page product-detail modal opening flow to pass `storeDetails` (loaded once on Category page load) and `categoryDetails` from the current category context into `ProductDetailModal` when a product card is selected.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "From Category Page (when opening modal from category products):\n- `product` - Complete product object from `useGetCategoryProductsPaginated()`\n- `storeDetails` - Store details from `useGetStoreDetails()` (loaded once on category page)\n- `categoryDetails` - Category name and ID from current category page context",
-          "Category Page Implementation:\n- Load `storeDetails` once on initial category page load using stable actor pattern\n- Use current category page data for `categoryDetails`\n- Pass all required data to ProductDetailModal when opening"
-        ]
-      },
-      "acceptanceCriteria": [
-        "`frontend/src/pages/CategoryPage.tsx` passes `storeDetails` and `categoryDetails` into `ProductDetailModal` when `selectedProduct` is set.",
-        "`categoryDetails.id` matches the category id from the page query parameter and `categoryDetails.name` matches the loaded category name.",
-        "Opening the modal from the Category page does not trigger category/store fetches inside `ProductDetailModal`."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Enforce 'modal-only' internal product detail navigation: ensure public in-app interactions (Home category sections, Search results/autocomplete, Category page product grid) do not navigate to `/product/$barcode` and instead open `ProductDetailModal`. Keep `/product/$barcode` accessible only via direct URL entry/bookmarks/external links.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Internal Navigation: All internal navigation within the application (home page, category page, search) must open the ProductDetailModal, not navigate to the standalone product details page",
-          "Standalone Page Only: The product details page should never be loaded or navigated to from other pages within the application"
-        ]
-      },
-      "acceptanceCriteria": [
-        "From Home category product cards, Search results/autocomplete selections, and Category page product cards, user interaction opens `ProductDetailModal` and does not call `navigate({ to: '/product/$barcode' ... })`.",
-        "The standalone product page (`frontend/src/pages/ProductDetailPage.tsx`) continues to function when visiting `/product/<barcode>` directly (no changes required to its data fetching).",
-        "Any generic product card component used on public pages that currently navigates to `/product/$barcode` is updated or avoided in these flows so it does not create internal navigation to the standalone product page."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Preserve existing layout/styling constraints: keep the Home page search box full width of the 1200px container, and do not change the `:root` CSS custom properties block in `frontend/src/index.css` (append-only changes below the block if any CSS changes are needed).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Search Box Width: Home page search box must always be full width of the 1200px container, never changed",
-          "Do not remove, modify, or overwrite the :root CSS custom properties block in index.css containing all theme color variables ... Always preserve the exact variable names, values, and structure, appending new CSS styles only below this block without changes."
-        ]
-      },
-      "acceptanceCriteria": [
-        "The Home page search input remains `w-full` within the `max-w-[1200px]` container and does not regress to a narrower width on desktop.",
-        "No edits are made to the existing `:root` CSS variables block in `frontend/src/index.css` (no renames/reordering/value changes)."
+        "The file frontend/public/.well-known/ii-alternative-origins exists",
+        "The file contains exactly the specified JSON content with all four domain URLs",
+        "No other files are modified"
       ]
     }
   ],
   "constraints": [
-    "Frontend-only change; do not modify Motoko backend canister code.",
-    "Do not edit files in `frontend/src/components/ui` or other immutable paths listed in SYSTEM_CONTEXT.",
-    "Do not remove, modify, or overwrite the `:root` CSS custom properties block in `frontend/src/index.css`; only append new CSS below it if needed.",
-    "Maintain existing ProductDetailModal behaviors (close button positioning, ESC close, overlay click close, and browser back-button/history handling)."
+    "Do not modify any other files in the project",
+    "Preserve the exact JSON formatting and domain URLs as specified"
   ],
   "nonGoals": [
-    "Do not remove or redesign the standalone product detail page (`/product/$barcode`); it must remain available for direct URL access and can keep its existing API calls.",
-    "Do not change store/category/product backend APIs or React Query hooks behavior outside what is necessary to stop modal-internal fetching.",
-    "Do not change the Search results grid column counts/responsive behavior.",
-    "Do not change the Home page container width (1200px) or reduce the search box width within it."
+    "Adding additional alternative origins",
+    "Modifying Internet Identity authentication logic",
+    "Changing any backend configuration"
   ],
   "imageRequirements": {
     "required": [],
